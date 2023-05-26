@@ -1,0 +1,54 @@
+---
+prometheus_target_host: prometheus # FIXME: Non default argument_spec
+
+prometheus_target_strategy: lineinfile
+
+
+################################################################################
+# handler configuration
+################################################################################
+
+prometheus_target_handler_command_enabled: false
+prometheus_target_handler_command_become: true
+# prometheus_target_handler_command_argv:
+# prometheus_target_handler_command_chdir:
+# prometheus_target_handler_command_cmd:
+# prometheus_target_handler_command_creates:
+# prometheus_target_handler_command_free_form:
+# prometheus_target_handler_command_removes:
+# prometheus_target_handler_command_stdin:
+# prometheus_target_handler_command_stdin_add_newline:
+
+prometheus_target_handler_shell_enabled: false
+prometheus_target_handler_shell_become: true
+# prometheus_target_handler_shell_chdir:
+# prometheus_target_handler_shell_cmd:
+# prometheus_target_handler_shell_creates:
+# prometheus_target_handler_shell_executable:
+# prometheus_target_handler_shell_free_form:
+# prometheus_target_handler_shell_removes:
+# prometheus_target_handler_shell_stdin:
+# prometheus_target_handler_shell_stdin_add_newline:
+
+################################################################################
+# lineinfile strategy configuration
+################################################################################
+
+prometheus_target_strategy_lineinfile_prefix: '  - '
+prometheus_target_strategy_lineinfile_suffix: ''
+
+################################################################################
+# Exporter configuration
+################################################################################
+
+prometheus_target_exporter_defaults:
+  node_exporter:
+    path: /opt/prometheus/targets.yml
+    host: '{{ inventory_hostname }}'
+
+prometheus_target_exporter: []
+  # - id: node_exporter
+  #   path: asd
+  #   hosts: ['{{ inventory_hostname }}']
+
+default_hostname: '{{ inventory_hostname }}' # TODO: Implement

@@ -1,0 +1,4 @@
+---
+- name: Select strategy
+  ansible.builtin.include_tasks:
+    file: '{{ prometheus_target_strategy }}.yml'

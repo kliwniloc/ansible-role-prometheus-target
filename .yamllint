@@ -1,0 +1,52 @@
+# https://yamllint.readthedocs.io/en/stable/rules.html
+---
+rules:
+  quoted-strings:
+    quote-type: single
+    required: only-when-needed
+
+  colons:
+    max-spaces-before: 0
+    max-spaces-after: 1
+
+  commas:
+    max-spaces-before: 0
+    min-spaces-after: 1
+    max-spaces-after: 1
+
+  comments:
+    require-starting-space: true
+    ignore-shebangs: true
+    min-spaces-from-content: 1
+
+  document-end:
+    present: false
+
+  document-start:
+    present: true
+
+  empty-lines:
+    max: 2
+    max-start: 0
+    max-end: 0
+
+  empty-values:
+    forbid-in-block-mappings: true
+    forbid-in-flow-mappings: true
+
+  float-values:
+    require-numeral-before-decimal: true
+
+  hyphens:
+    max-spaces-after: 1
+
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: true
+
+  trailing-spaces: {}
+
+  truthy:
+    allowed-values: ['true', 'false']
+    check-keys: true

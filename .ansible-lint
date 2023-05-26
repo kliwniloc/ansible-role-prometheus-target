@@ -1,0 +1,80 @@
+# https://ansible-lint.readthedocs.io
+---
+exclude_paths: []
+
+use_default_rules: true
+
+enable_list:
+  # Ansible `min` profile
+  - internal-error
+  - load-failure
+  - parser-error
+  - syntax-check
+
+  # Ansible `basic` profile
+  - command-instead-of-module
+  - command-instead-of-shell
+  - deprecated-bare-vars
+  - deprecated-local-action
+  - deprecated-module
+  - inline-env-var
+  - key-order
+  - literal-compare
+  - jinja
+  - no-free-form
+  - no-jinja-when
+  - no-tabs
+  - partial-become
+  - playbook-extension
+  - role-name
+  - schema
+  - name
+  - var-naming
+  - yaml
+
+  # Ansible `moderate` profile
+  - name[template]
+  - name[imperative]
+  - name[casing]
+  - spell-var-name
+
+  # Ansible `safety` profile
+  - avoid-implicit
+  - latest
+  - package-latest
+  - risky-file-permissions
+  - risky-octal
+  - risky-shell-pipe
+
+  # Ansible `shared` profile
+  - galaxy
+  - ignore-errors
+  - layout
+  - meta-incorrect
+  - meta-no-tags
+  - meta-video-links
+  - meta-version
+  - meta-runtime
+  - no-changed-when
+  - no-handler
+  - no-relative-paths
+  - max-block-depth
+  - max-tasks
+  - unsafe-loop
+
+  # Ansible `production` profile
+  - avoid-dot-notation
+  - sanity
+  - fqcn
+  - import-task-no-when
+  - meta-no-dependencies
+  - single-entry-point
+  - use-loop
+
+  # Custom rules
+  - args
+  - empty-string-compare
+  - fqcn-builtins
+  - loop-var-prefix
+  - no-log-password
+  - no-same-owner
