@@ -1,0 +1,19 @@
+---
+dependencies: []
+
+galaxy_info:
+  role_name: prometheus_target
+  standalone: true
+  author: kliwniloc
+  description: Role for adding targets to prometheus instance
+  license: license (MIT)
+  min_ansible_version: '2.4'
+  platforms:
+    - name: Debian
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all
+  galaxy_tags:
+    - prometheus
