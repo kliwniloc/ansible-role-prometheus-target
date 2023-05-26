@@ -1,28 +1,28 @@
 ---
 - name: Run command hook # noqa inline-env-var
   ansible.builtin.command:
-    argv: '{{ prometheus_target_handler_command_argv | default(omit) }}'
-    chdir: '{{ prometheus_target_handler_command_chdir | default(omit) }}'
-    cmd: '{{ prometheus_target_handler_command_cmd | default(omit) }}'
-    creates: '{{ prometheus_target_handler_command_creates | default(omit) }}'
-    free_form: '{{ prometheus_target_handler_command_free_form | default(omit) }}'
-    removes: '{{ prometheus_target_handler_command_removes | default(omit) }}'
-    stdin: '{{ prometheus_target_handler_command_stdin | default(omit) }}'
-    stdin_add_newline: '{{ prometheus_target_handler_command_stdin_add_newline | default(omit) }}'
+    argv: '{{ prometheus_target_handler_command.argv | default(omit) }}'
+    chdir: '{{ prometheus_target_handler_command.chdir | default(omit) }}'
+    cmd: '{{ prometheus_target_handler_command.cmd | default(omit) }}'
+    creates: '{{ prometheus_target_handler_command.creates | default(omit) }}'
+    free_form: '{{ prometheus_target_handler_command.free_form | default(omit) }}'
+    removes: '{{ prometheus_target_handler_command.removes | default(omit) }}'
+    stdin: '{{ prometheus_target_handler_command.stdin | default(omit) }}'
+    stdin_add_newline: '{{ prometheus_target_handler_command.stdin_add_newline | default(omit) }}'
   become: '{{ prometheus_target_handler_command_become }}'
   delegate_to: '{{ prometheus_target_host }}'
   when: prometheus_target_handler_command_enabled
 
 - name: Run shell hook
   ansible.builtin.shell:
-    chdir: '{{ prometheus_target_handler_shell_chdir | default(omit) }}'
-    cmd: '{{ prometheus_target_handler_shell_cmd | default(omit) }}'
-    creates: '{{ prometheus_target_handler_shell_creates | default(omit) }}'
-    executable: '{{ prometheus_target_handler_shell_executable | default(omit) }}'
-    free_form: '{{ prometheus_target_handler_shell_free_form | default(omit) }}'
-    removes: '{{ prometheus_target_handler_shell_removes | default(omit) }}'
-    stdin: '{{ prometheus_target_handler_shell_stdin | default(omit) }}'
-    stdin_add_newline: '{{ prometheus_target_handler_shell_stdin_add_newline | default(omit) }}'
+    chdir: '{{ prometheus_target_handler_shell.chdir | default(omit) }}'
+    cmd: '{{ prometheus_target_handler_shell.cmd | default(omit) }}'
+    creates: '{{ prometheus_target_handler_shell.creates | default(omit) }}'
+    executable: '{{ prometheus_target_handler_shell.executable | default(omit) }}'
+    free_form: '{{ prometheus_target_handler_shell.free_form | default(omit) }}'
+    removes: '{{ prometheus_target_handler_shell.removes | default(omit) }}'
+    stdin: '{{ prometheus_target_handler_shell.stdin | default(omit) }}'
+    stdin_add_newline: '{{ prometheus_target_handler_shell.stdin_add_newline | default(omit) }}'
   become: '{{ prometheus_target_handler_shell_become }}'
   delegate_to: '{{ prometheus_target_host }}'
   when: prometheus_target_handler_shell_enabled
