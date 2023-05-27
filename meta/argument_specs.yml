@@ -1,0 +1,87 @@
+---
+argument_specs:
+  main:
+    options:
+
+################################################################################
+# Required
+################################################################################
+      prometheus_target_host:
+        type: str
+        required: true
+
+################################################################################
+# Optional
+################################################################################
+
+      prometheus_target_strategy:
+        type: str
+        required: false
+        default: lineinfile
+        choices:
+          - lineinfile
+          # More to be added
+
+      prometheus_target_handler_command_enabled:
+        type: bool
+        required: false
+        default: false
+
+      prometheus_target_handler_command_become:
+        type: bool
+        required: false
+        default: true
+
+      prometheus_target_handler_command:
+        type: dict
+        required: false
+        # Options from ansible command module
+        # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/command_module.html
+
+      prometheus_target_handler_shell_enabled:
+        type: bool
+        required: false
+        default: false
+
+      prometheus_target_handler_shell_become:
+        type: bool
+        required: false
+        default: true
+
+      prometheus_target_handler_shell:
+        type: dict
+        required: false
+        # Options from ansible shell module
+        # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html
+
+      prometheus_target_exporter_defaults:
+        type: dict
+        required: false
+        default: {}
+
+      prometheus_target_exporter:
+        type: list
+        required: false
+        default: []
+        elements: dict
+        options:
+          id:
+            type: str
+            required: true
+          path:
+            type: str
+            required: false
+          host:
+            type: str
+            required: false
+
+      prometheus_target_default_exporters:
+        type: list
+        required: false
+        default: []
+        elements: str
+
+      prometheus_target_skip_default_exporters:
+        type: bool
+        required: false
+        default: false
