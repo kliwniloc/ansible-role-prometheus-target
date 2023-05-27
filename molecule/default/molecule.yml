@@ -1,0 +1,39 @@
+---
+dependency:
+  name: galaxy
+
+
+driver:
+  name: docker
+
+
+platforms:
+
+  - name: application
+    image: ${MOLECULE_DISTRO:-debian:10}
+    dockerfile: Dockerfile.j2
+    pre_build_image: false
+    docker_networks:
+      - name: molecule-container-net
+        driver_options:
+          # Setting the mtu size due to issues with docker and VPN
+          com.docker.network.driver.mtu: 1420
+    networks:
+      - name: molecule-container-net
+
+  - name: prometheus
+    image: ${MOLECULE_DISTRO:-debian:10}
+    dockerfile: Dockerfile.j2
+    pre_build_image: false
+    networks:
+      - name: molecule-container-net
+
+
+provisioner:
+  name: ansible
+  playbooks:
+    converge: ${MOLECULE_PLAYBOOK:-converge.yml}
+
+
+verifier:
+  name: testinfra

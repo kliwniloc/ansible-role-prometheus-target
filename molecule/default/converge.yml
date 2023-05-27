@@ -1,0 +1,43 @@
+---
+- name: Converge
+  hosts: application
+  pre_tasks:
+    - name: Create targets
+      ansible.builtin.file:
+        path: '{{ item }}'
+        state: touch
+        modification_time: preserve
+        access_time: preserve
+        mode: '0644'
+      become: true
+      delegate_to: '{{ prometheus_target_host }}'
+      loop:
+        - /opt/target1.yml
+        - /opt/target2.yml
+        - /opt/target3.yml
+
+  vars:
+    prometheus_target_handler_command_enabled: true
+    prometheus_target_handler_command:
+      cmd: echo test
+    prometheus_target_handler_shell_enabled: true
+    prometheus_target_handler_shell:
+      cmd: echo test
+    prometheus_target_exporter_defaults:
+      node_exporter:
+        path: /opt/target1.yml
+        host: '{{ inventory_hostname }}'
+      blackbox_exporter:
+        path: /opt/target2.yml
+        host: '{{ inventory_hostname }}_AA'
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - id: node_exporter
+        - { id: blackbox_exporter, host: test1 }
+        - { id: blackbox_exporter, host: test2 }
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - id: blackbox_exporter
+          path: /opt/target3.yml
