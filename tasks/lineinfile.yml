@@ -1,15 +1,14 @@
 ---
 - name: Make sure targets are deployed
   ansible.builtin.lineinfile:
-    path: '{{ item.0.path if item.0.path is defined else prometheus_target_exporter_defaults[item.0.id].path }}'
+    path: '{{ item.path if item.path is defined else prometheus_target_exporter_defaults[item.id].path }}'
     line: '{{ prometheus_target_strategy_lineinfile_prefix ~
-           (item.1 if item.1 != "" else prometheus_target_exporter_defaults[item.0.id].host) ~
+           (item.host if item.host is defined else prometheus_target_exporter_defaults[item.id].host) ~
            prometheus_target_strategy_lineinfile_suffix }}'
     state: present
   become: true
   delegate_to: '{{ prometheus_target_host }}'
-  loop: '{{ (prometheus_target_exporter | selectattr("hosts", "defined") | subelements("hosts"))
-         + (prometheus_target_exporter | selectattr("hosts", "undefined") | product([""])) }}'
+  loop: '{{ prometheus_target_exporter }}'
   notify:
     - Run command hook
     - Run shell hook

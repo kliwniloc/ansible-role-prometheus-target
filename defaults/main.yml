@@ -49,7 +49,9 @@ prometheus_target_exporter_defaults:
 
 prometheus_target_exporter: []
   # - id: node_exporter
-  #   path: asd
-  #   hosts: ['{{ inventory_hostname }}']
+  #   # overwrites prometheus_target_exporter_defaults.node_exporter.path
+  #   path: /path/to/targets/file/on/prometheus/host
+  #   # overwrites: prometheus_target_exporter_defaults.node_exporter.host
+  #   host: '{{ inventory_hostname }}:9100'
 
 default_hostname: '{{ inventory_hostname }}' # TODO: Implement
