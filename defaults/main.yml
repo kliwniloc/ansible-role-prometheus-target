@@ -1,5 +1,5 @@
 ---
-prometheus_target_host: prometheus # FIXME: Non default argument_spec
+# prometheus_target_host:
 
 prometheus_target_strategy: lineinfile
 

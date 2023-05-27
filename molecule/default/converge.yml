@@ -17,6 +17,7 @@
         - /opt/target3.yml
 
   vars:
+    prometheus_target_host: prometheus
     prometheus_target_handler_command_enabled: true
     prometheus_target_handler_command:
       cmd: echo test
