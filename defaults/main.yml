@@ -1,14 +1,37 @@
 ---
+# This should be your prometheus host as it is defined in your ansible
+# inventory. This is where all the target files specified in the exporters
+# `path` should exist. The host is used for the delegated tasks in this role.
+# ---
 # prometheus_target_host:
 
+# This is the strategy that is used for adding hosts.
+# See readme for more info on the individual strategies.
 prometheus_target_strategy: lineinfile
 
 
 ################################################################################
-# handler configuration
+# Handler configuration
 ################################################################################
+
+# On the change of any target file the command and the shell handler will be
+# triggered. You can use this to reload your prometheus instance, commit target
+# changes somewhere, ...
+
+# This variable enables the command handler. Make sure to also provide the
+# necessary configuration in prometheus_target_handler_command
 prometheus_target_handler_command_enabled: false
+
+# By default the target command handler will be run with root privileges on the
+# prometheus host. This is useful if you want to send a signal to the prometheus
+# host to trigger a reload. In other instances, for example if you reload the
+# instance with a curl command, or ssh with the prometheus user, this may not be
+# necessary.
 prometheus_target_handler_command_become: true
+
+# This is the configuration for the command module. For documentation see:
+# https://docs.ansible.com/ansible/latest/collections/ansible/builtin/command_module.html
+# ---
 # prometheus_target_handler_command:
 #   argv:
 #   chdir:
@@ -19,8 +42,18 @@ prometheus_target_handler_command_become: true
 #   stdin:
 #   stdin_add_newline:
 
+# This is the same as the prometheus_target_handler_command settings but uses
+# the ansible shell module. You might want to consider using this if you require
+# things such as environment variables in the handler.
 prometheus_target_handler_shell_enabled: false
+
+# This will configure if the shell handler is run with root privileges or not.
+# See documentation for prometheus_target_handler_command_become above.
 prometheus_target_handler_shell_become: true
+
+# This is the configuration for the shell module. For documentation see:
+# https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html
+# ---
 # prometheus_target_handler_shell:
 #   chdir:
 #   cmd:
@@ -31,22 +64,50 @@ prometheus_target_handler_shell_become: true
 #   stdin:
 #   stdin_add_newline:
 
+
 ################################################################################
 # lineinfile strategy configuration
 ################################################################################
 
+# You can use these 2 settings to prefix / suffix all of your exporters.
+# With the yaml target configurations you might have target files like this:
+# ---
+# - targets:
+#   - target_1
+#   - target_2
+# ...
+# This configuration is mostly used for globally indenting all of your targets
+# in their target configuration and thus keeping this configuration away from
+# the exporter host variable.
 prometheus_target_strategy_lineinfile_prefix: '  - '
 prometheus_target_strategy_lineinfile_suffix: ''
+
 
 ################################################################################
 # Exporter configuration
 ################################################################################
 
-prometheus_target_exporter_defaults:
-  node_exporter:
-    path: /opt/prometheus/targets.yml
-    host: '{{ inventory_hostname }}'
+# This will configure the default settings for specified exporters.
+# The key in this dict should map to the possible id in the specified exporter
+# in prometheus_target_exporter or prometheus_target_default_exporters.
+# The settings specified in prometheus_target_exporter will supersede the ones
+# here. It is recommended to specify the defaults for all exporters in use since
+# usually the path / host parameters can be auto generated from variables and
+# static information such as the port the exporter usually runs on.
+# Ideally the only thing you should specify on the role level is the id, i.e.
+# the exporter you want to enable, to keep a clean configuration.
+prometheus_target_exporter_defaults: {}
+  # node_exporter:
+  #   path: /opt/prometheus/targets.yml
+  #   host: '{{ inventory_hostname }}:9100'
+  # blackbox_exporter:
+  #   path: /opt/prometheus/blackbox.yml
+  #   host: 'https://{{ hostvars[inventory_hostname].ansible_host }}'
 
+# This is where you specify the exporters that should be deployed to prometheus.
+# You should configure this on a per play basis. If you wish to configure
+# exporters that are added on every play i.e. default exporters see the
+# prometheus_target_default_exporters variable below.
 prometheus_target_exporter: []
   # - id: node_exporter
   #   # overwrites prometheus_target_exporter_defaults.node_exporter.path
@@ -54,4 +115,14 @@ prometheus_target_exporter: []
   #   # overwrites: prometheus_target_exporter_defaults.node_exporter.host
   #   host: '{{ inventory_hostname }}:9100'
 
-default_hostname: '{{ inventory_hostname }}' # TODO: Implement
+# This is a list of exporters that will be appended to the
+# prometheus_target_exporter variable. duplicate exporters in
+# prometheus_target_exporter and prometheus_target_default_exporters will be
+# ignored.
+prometheus_target_default_exporters: [] # TODO: Implement
+  # - { id: node_exporter }
+  # - { id: blackbox_exporter, path: /path/to/target }
+
+# You can enable this variable to not add exporters defined in
+# prometheus_target_default_exporters
+prometheus_target_skip_default_exporters: false # TODO: Implement
