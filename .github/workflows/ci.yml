@@ -1,0 +1,80 @@
+---
+name: CI
+
+'on':
+  push:
+    branches:
+      - master
+      - dev
+  schedule:
+    - cron: 0 4 * * 5
+
+defaults:
+  run:
+    working-directory: kliwniloc.prometheus_target
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+      - uses: pre-commit/action@v3.0.0
+
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the codebase.
+        uses: actions/checkout@v2
+        with:
+          path: kliwniloc.prometheus_target
+
+      - name: Set up Python 3.
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - name: Install test dependencies.
+        run: pip3 install yamllint
+
+      - name: Lint code.
+        run: |
+          yamllint .
+
+
+  molecule:
+    name: Molecule
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        distro:
+          - debian:10
+          - debian:11
+
+          - ubuntu:18.04
+          - ubuntu:20.04
+          - ubuntu:22.04
+          - ubuntu:23.04
+
+    steps:
+      - name: Check out the codebase.
+        uses: actions/checkout@v2
+        with:
+          path: kliwniloc.prometheus_target
+
+      - name: Set up Python 3.
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - name: Install test dependencies.
+        run: pip3 install ansible molecule molecule-plugins[docker] docker pytest testinfra
+
+      - name: Run Molecule tests.
+        run: molecule test
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          MOLECULE_DISTRO: ${{ matrix.distro }}
