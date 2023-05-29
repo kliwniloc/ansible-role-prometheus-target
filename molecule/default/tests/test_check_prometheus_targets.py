@@ -10,7 +10,7 @@ def test_check_hosts_added(host):
     assert t2.exists
     assert t3.exists
 
-    assert '  - application' in t1.content_string
-    assert '  - test1' in t2.content_string
-    assert '  - test2' in t2.content_string
-    assert '  - application_AA' in t3.content_string
+    assert '    - application' in t1.content_string
+    assert '    - test1' in t2.content_string
+    assert '    - test2' in t2.content_string
+    assert '    - application_AA' in t3.content_string

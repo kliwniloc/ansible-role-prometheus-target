@@ -79,7 +79,7 @@ prometheus_target_handler_shell_become: true
 # This configuration is mostly used for globally indenting all of your targets
 # in their target configuration and thus keeping this configuration away from
 # the exporter host variable.
-prometheus_target_strategy_lineinfile_prefix: '  - '
+prometheus_target_strategy_lineinfile_prefix: '    - '
 prometheus_target_strategy_lineinfile_suffix: ''
 
 
