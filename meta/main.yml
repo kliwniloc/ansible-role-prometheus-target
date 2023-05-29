@@ -15,5 +15,17 @@ galaxy_info:
     - name: Ubuntu
       versions:
         - all
+    - name: Alpine
+      versions:
+        - all
+    - name: Fedora
+      versions:
+        - all
+    - name: ArchLinux
+      versions:
+        - all
+    - name: EL
+      versions:
+        - all
   galaxy_tags:
     - prometheus

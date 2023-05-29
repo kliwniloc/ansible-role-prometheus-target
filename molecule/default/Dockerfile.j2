@@ -1,12 +1,23 @@
 FROM {{ item.image }}
 
 # Install dependencies.
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-       sudo wget \
-       python3-pip python3-dev python3-setuptools python3-wheel python3-apt \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -Rf /usr/share/doc && rm -Rf /usr/share/man \
-    && apt-get clean
+RUN if [ $(command -v apt-get) ]; then \
+        apt-get update \
+            && apt-get install -y --no-install-recommends \
+            sudo wget \
+            python3-pip python3-dev python3-setuptools python3-wheel python3-apt \
+            && rm -rf /var/lib/apt/lists/* \
+            && rm -Rf /usr/share/doc && rm -Rf /usr/share/man \
+            && apt-get clean; \
+    elif [ $(command -v apk) ]; then \
+        apk update && apk add --no-cache python3 sudo bash ca-certificates; \
+    elif [ $(command -v yum) ]; then \
+        yum -y update && yum -y install sudo python3; \
+    elif [ $(command -v dnf) ]; then \
+        dnf makecache && dnf --assumeyes install \
+        python sudo python-devel python3-dnf bash iproute && dnf clean all; \
+    elif [ $(command -v pacman) ]; then \
+        pacman -Syu --noconfirm python3 sudo; \
+    fi
 
 ENTRYPOINT ["bash", "-c", "sleep infinity"]
