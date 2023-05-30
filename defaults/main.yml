@@ -123,10 +123,10 @@ prometheus_target_exporter: []
 # prometheus_target_exporter variable. duplicate exporters in
 # prometheus_target_exporter and prometheus_target_default_exporters will be
 # ignored.
-prometheus_target_default_exporters: [] # TODO: Implement
+prometheus_target_default_exporters: []
   # - { id: node_exporter }
   # - { id: blackbox_exporter, path: /path/to/target }
 
 # You can enable this variable to not add exporters defined in
 # prometheus_target_default_exporters
-prometheus_target_skip_default_exporters: false # TODO: Implement
+prometheus_target_skip_default_exporters: false

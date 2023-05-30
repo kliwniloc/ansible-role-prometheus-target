@@ -8,7 +8,8 @@
     state: present
   become: true
   delegate_to: '{{ prometheus_target_host }}'
-  loop: '{{ prometheus_target_exporter }}'
+  loop: '{{ prometheus_target_exporter +
+         ([] if prometheus_target_skip_default_exporters else prometheus_target_default_exporters) }}'
   notify:
     - Run command hook
     - Run shell hook
