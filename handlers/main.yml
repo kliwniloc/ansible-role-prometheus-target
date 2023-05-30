@@ -10,6 +10,8 @@
     stdin: '{{ prometheus_target_handler_command.stdin | default(omit) }}'
     stdin_add_newline: '{{ prometheus_target_handler_command.stdin_add_newline | default(omit) }}'
   become: '{{ prometheus_target_handler_command_become }}'
+  become_method: '{{ prometheus_target_handler_command_become_method | default(omit) }}'
+  become_user: '{{ prometheus_target_handler_command_become_user | default(omit) }}'
   delegate_to: '{{ prometheus_target_host }}'
   when: prometheus_target_handler_command_enabled
 
@@ -24,5 +26,7 @@
     stdin: '{{ prometheus_target_handler_shell.stdin | default(omit) }}'
     stdin_add_newline: '{{ prometheus_target_handler_shell.stdin_add_newline | default(omit) }}'
   become: '{{ prometheus_target_handler_shell_become }}'
+  become_method: '{{ prometheus_target_handler_shell_become_method | default(omit) }}'
+  become_user: '{{ prometheus_target_handler_shell_become_user | default(omit) }}'
   delegate_to: '{{ prometheus_target_host }}'
   when: prometheus_target_handler_shell_enabled

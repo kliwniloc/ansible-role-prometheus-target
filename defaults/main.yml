@@ -28,6 +28,8 @@ prometheus_target_handler_command_enabled: false
 # instance with a curl command, or ssh with the prometheus user, this may not be
 # necessary.
 prometheus_target_handler_command_become: true
+# prometheus_target_handler_command_become_method:
+# prometheus_target_handler_command_become_user:
 
 # This is the configuration for the command module. For documentation see:
 # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/command_module.html
@@ -50,6 +52,8 @@ prometheus_target_handler_shell_enabled: false
 # This will configure if the shell handler is run with root privileges or not.
 # See documentation for prometheus_target_handler_command_become above.
 prometheus_target_handler_shell_become: true
+# prometheus_target_handler_shell_become_method:
+# prometheus_target_handler_shell_become_user:
 
 # This is the configuration for the shell module. For documentation see:
 # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html

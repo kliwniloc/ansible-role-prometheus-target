@@ -117,8 +117,8 @@ changes via a hook.
 
 You can enable or disable the handlers via the `prometheus_target_handler_command_enabled`/
 `prometheus_target_handler_shell_enabled` variables and configure become
-behavior via `prometheus_target_handler_command_become`/
-`prometheus_target_handler_shell_become`.
+behavior via `prometheus_target_handler_command_become*`/
+`prometheus_target_handler_shell_become*`.
 
 The `prometheus_target_handler_command` and `prometheus_target_handler_shell`
 variables map the options of their respective Ansible
@@ -130,10 +130,14 @@ module.
 ```yaml
 prometheus_target_handler_command_enabled: false
 prometheus_target_handler_command_become: true
+# prometheus_target_handler_command_become_method:
+# prometheus_target_handler_command_become_user:
 prometheus_target_handler_command: {}
 
 prometheus_target_handler_shell_enabled: false
 prometheus_target_handler_shell_become: true
+# prometheus_target_handler_shell_become_method:
+# prometheus_target_handler_shell_become_user:
 prometheus_target_handler_shell: {}
 ```
 
