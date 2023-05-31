@@ -32,7 +32,7 @@ ansible-galaxy collection install git+https://github.com/kliwniloc/ansible-role-
 Role Variables
 --------------
 
-For more details see `defaults/main.yml`
+For more details see [`defaults/main.yml`](defaults/main.yml)
 
 You need to specify your Prometheus server. The server needs to be present under
 that that name in your inventory.
