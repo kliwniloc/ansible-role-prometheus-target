@@ -9,7 +9,7 @@ Installation
 via galaxy:
 
 ```sh
-ansible-galaxy collection install kliwniloc.prometheus_target
+ansible-galaxy install kliwniloc.prometheus_target
 ```
 
 ```yaml
@@ -20,7 +20,7 @@ ansible-galaxy collection install kliwniloc.prometheus_target
 via git:
 
 ```sh
-ansible-galaxy collection install git+https://github.com/kliwniloc/ansible-role-prometheus-target.git,master
+ansible-galaxy install git+https://github.com/kliwniloc/ansible-role-prometheus-target.git,master
 ```
 
 ```yaml
