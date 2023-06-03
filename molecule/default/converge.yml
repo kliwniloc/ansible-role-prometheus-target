@@ -1,5 +1,5 @@
 ---
-- name: Converge
+- name: Simple deploy
   hosts: application
   pre_tasks:
     - name: Create targets
@@ -12,24 +12,18 @@
       become: true
       delegate_to: '{{ prometheus_target_host }}'
       loop:
-        - /opt/target1.yml
-        - /opt/target2.yml
-        - /opt/target3.yml
+        - /opt/simple_target1.yml
+        - /opt/simple_target2.yml
+        - /opt/simple_target3.yml
 
   vars:
     prometheus_target_host: prometheus
-    prometheus_target_handler_command_enabled: true
-    prometheus_target_handler_command:
-      cmd: echo test
-    prometheus_target_handler_shell_enabled: true
-    prometheus_target_handler_shell:
-      cmd: echo test
     prometheus_target_exporter_defaults:
       node_exporter:
-        path: /opt/target1.yml
+        path: /opt/simple_target1.yml
         host: '{{ inventory_hostname }}'
       blackbox_exporter:
-        path: /opt/target2.yml
+        path: /opt/simple_target2.yml
         host: '{{ inventory_hostname }}_AA'
 
   roles:
@@ -41,4 +35,77 @@
     - role: kliwniloc.prometheus_target
       prometheus_target_exporter:
         - id: blackbox_exporter
-          path: /opt/target3.yml
+          path: /opt/simple_target3.yml
+
+
+- name: Deploy with hooks
+  hosts: application
+  pre_tasks:
+    - name: Create targets
+      ansible.builtin.file:
+        path: '{{ item }}'
+        state: touch
+        modification_time: preserve
+        access_time: preserve
+        mode: '0644'
+      become: true
+      delegate_to: '{{ prometheus_target_host }}'
+      loop:
+        - /opt/hook_target.yml
+        - /opt/hook1
+        - /opt/hook1
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_handler_command_enabled: true
+    prometheus_target_handler_command:
+      cmd: touch /opt/hook1
+    prometheus_target_handler_shell_enabled: true
+    prometheus_target_handler_shell:
+      cmd: touch /opt/hook2
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - id: node_exporter
+          host: application
+          path: /opt/hook_target.yml
+
+
+- name: Deploy with lineinfile
+  hosts: application
+  pre_tasks:
+    - name: Create test user
+      ansible.builtin.user:
+        name: prometheus
+      become: true
+      delegate_to: '{{ prometheus_target_host }}'
+
+    - name: Create target
+      ansible.builtin.copy:
+        dest: /opt/lineinfile.yml
+        owner: prometheus
+        group: prometheus
+        mode: '0600'
+        force: false
+        # yamllint disable rule:indentation
+        content: |
+          - labels:
+              my: label
+            targets:
+            - existing:9100
+        # yamllint enable rule:indentation
+      become: true
+      delegate_to: '{{ prometheus_target_host }}'
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_strategy_lineinfile_prefix: '  - '
+    prometheus_target_strategy_lineinfile_suffix: :9100
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - id: node_exporter
+          path: /opt/lineinfile.yml
+          host: '{{ inventory_hostname }}'
