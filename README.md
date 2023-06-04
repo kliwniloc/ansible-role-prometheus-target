@@ -213,6 +213,59 @@ Multiple exporters
         - { id: blackbox_exporter, host: node3.example.org }
 ```
 
+Target file matching based on group vars
+
+```ini
+# Inventory file
+[agents_s]
+agent-s-[1:2]
+
+[agents_m]
+agent-m-[1:2]
+
+[agents:children]
+agents_s
+agents_m
+```
+
+```yaml
+# group_vars/agents_s.yml
+prometheus_target_exporter_defaults:
+    node_exporter:
+    path: /opt/prometheus/targets/agent_s.yml
+    host: '{{ inventory_hostname }}:9100'
+
+# group_vars/agents_m.yml
+prometheus_target_exporter_defaults:
+    node_exporter:
+    path: /opt/prometheus/targets/agent_m.yml
+    host: '{{ inventory_hostname }}:9100'
+```
+
+```yaml
+- name: Deploy monitoring
+  hosts: agents
+
+  vars:
+    prometheus_target_host: prometheus
+
+  roles:
+    - role: prometheus.node_exporter # deploy node_exporter service
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - id: node_exporter
+```
+
+```diff
+# /opt/prometheus/targets/agent_s.yml
++    - agent-s-1:9100
++    - agent-s-2:9100
+
+# /opt/prometheus/targets/agent_m.yml
++    - agent-m-1:9100
++    - agent-m-2:9100
+```
+
 Dependencies
 ------------
 
