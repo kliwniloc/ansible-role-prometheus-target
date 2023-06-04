@@ -66,7 +66,6 @@ jobs:
           - fedora:36
           - fedora:37
           - fedora:38
-          - fedora:39
           - fedora:latest
 
           - archlinux:latest
