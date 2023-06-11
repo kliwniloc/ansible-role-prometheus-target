@@ -13,6 +13,10 @@ argument_specs:
 ################################################################################
 # Optional
 ################################################################################
+      prometheus_target_exporter_target_prefix:
+        type: str
+        required: false
+        default: ''
 
       prometheus_target_strategy:
         type: str
@@ -69,6 +73,9 @@ argument_specs:
             type: str
             required: true
           path:
+            type: str
+            required: false
+          path_prefix:
             type: str
             required: false
           host:

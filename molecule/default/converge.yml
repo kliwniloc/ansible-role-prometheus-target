@@ -1,4 +1,6 @@
 ---
+################################################################################
+################################################################################
 - name: Simple deploy
   hosts: application
   pre_tasks:
@@ -37,7 +39,47 @@
         - id: blackbox_exporter
           path: /opt/simple_target3.yml
 
+################################################################################
+################################################################################
+- name: Prefix deploy
+  hosts: application
+  pre_tasks:
+    - name: Create targets
+      ansible.builtin.file:
+        path: '{{ item.path }}'
+        state: '{{ item.state }}'
+        modification_time: preserve
+        access_time: preserve
+        mode: '0644'
+      become: true
+      delegate_to: '{{ prometheus_target_host }}'
+      loop:
+        - { state: touch, path: /opt/prefix_target1.yml }
+        - { state: touch, path: /opt/prefix_target2.yml }
+        - { state: directory, path: /opt/prefix}
+        - { state: touch, path: /opt/prefix/prefix_target3.yml }
 
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_exporter_target_prefix: /opt/
+    prometheus_target_exporter_defaults:
+      node_exporter:
+        path: prefix_target1.yml
+        host: '{{ inventory_hostname }}'
+      blackbox_exporter:
+        path: prefix_target_not_exist.yml
+        host: '{{ inventory_hostname }}'
+        path_prefix: /opt/prefix/
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - id: node_exporter
+        - { id: node_exporter, path: /opt/prefix_target2.yml, path_prefix: '' }
+        - { id: blackbox_exporter, path: prefix_target3.yml }
+
+################################################################################
+################################################################################
 - name: Deploy with hooks
   hosts: application
   pre_tasks:
@@ -71,7 +113,8 @@
           host: application
           path: /opt/hook_target.yml
 
-
+################################################################################
+################################################################################
 - name: Deploy with lineinfile
   hosts: application
   pre_tasks:

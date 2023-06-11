@@ -56,8 +56,9 @@ prometheus_target_exporter_defaults: {}
   #   path: /opt/prometheus/targets.yml
   #   host: '{{ inventory_hostname }}:9100'
   # blackbox_exporter:
-  #   path: /opt/prometheus/blackbox.yml
+  #   path: /opt/targets/blackbox.yml
   #   host: 'https://{{ hostvars[inventory_hostname].ansible_host }}'
+  #   path_prefix: ''
 
 prometheus_target_exporter: []
 ```
@@ -69,6 +70,26 @@ specify them in the `prometheus_target_exporter` variable by adding them to the
 ```yaml
 prometheus_target_default_exporters: []
 prometheus_target_skip_default_exporters: false
+```
+
+As you usually have most target files in one directory you can specify a target
+prefix for your target files:
+
+```yaml
+prometheus_target_exporter_target_prefix: ''
+```
+
+This way you only need to pass `target.yml` instead of `/path/to/target.yml` as
+your exporter path. You can additionally define this at the
+`prometheus_target_exporter_defaults` and the `prometheus_target_exporter` level
+using the `path_prefix` variable:
+
+```yaml
+prometheus_target_exporter_defaults:
+  blackbox_exporter:
+    path: /opt/targets/blackbox.yml
+    host: 'https://{{ hostvars[inventory_hostname].ansible_host }}'
+    path_prefix: '' # Disables configured prefix
 ```
 
 This role offers a few strategies that you can use to deploy your targets.
@@ -162,6 +183,32 @@ Simple example
     - role: kliwniloc.prometheus_target # deploy target
       prometheus_target_exporter:
         - id: node_exporter
+```
+
+Using Target prefix
+
+```yaml
+- name: Deploy node exporter with target prefix
+  hosts: myhost
+
+  vars: # General configuration. Can be set in group_vars
+    prometheus_target_host: prometheus
+    prometheus_target_exporter_target_prefix: /opt/prometheus/targets/
+    prometheus_target_exporter_defaults:
+      node_exporter:
+        path: node.yml
+        host: '{{ inventory_hostname }}:9100'
+      blackbox_exporter: # Another exporter with different prefix
+        path: target.yml
+        host: '{{ inventory_hostname }}'
+        path_prefix: /opt/prefix/
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - id: node_exporter # -> /opt/prometheus/targets/node.yml
+        - { id: node_exporter, path: /target.yml, path_prefix: '' } # -> /target.yml
+        - { id: blackbox_exporter, path: blackbox.yml } # -> /opt/prefix/blackbox.yml
 ```
 
 Using Handlers

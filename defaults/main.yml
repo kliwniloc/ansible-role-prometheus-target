@@ -91,6 +91,16 @@ prometheus_target_strategy_lineinfile_suffix: ''
 # Exporter configuration
 ################################################################################
 
+# You can configure a target prefix to keep your targets in your exporters
+# configuration. DRY For example if all your target files reside in
+# /opt/prometheus it's a good idea to set the prefix to /opt/prometheus/ so that
+# you can define your remaining target files as just target.yml instead of
+# /opt/prometheus/target.yml
+# In case you have a few exporters that reside in different directories you may
+# ignore the prefix by specifying `path_prefix: ''` in the exporter default
+# or the enabled exporter config.
+prometheus_target_exporter_target_prefix: ''
+
 # This will configure the default settings for specified exporters.
 # The key in this dict should map to the possible id in the specified exporter
 # in prometheus_target_exporter or prometheus_target_default_exporters.
@@ -105,8 +115,9 @@ prometheus_target_exporter_defaults: {}
   #   path: /opt/prometheus/targets.yml
   #   host: '{{ inventory_hostname }}:9100'
   # blackbox_exporter:
-  #   path: /opt/prometheus/blackbox.yml
+  #   path: /opt/targets/blackbox.yml
   #   host: 'https://{{ hostvars[inventory_hostname].ansible_host }}'
+  #   path_prefix: ''
 
 # This is where you specify the exporters that should be deployed to prometheus.
 # You should configure this on a per play basis. If you wish to configure
@@ -125,7 +136,7 @@ prometheus_target_exporter: []
 # ignored.
 prometheus_target_default_exporters: []
   # - { id: node_exporter }
-  # - { id: blackbox_exporter, path: /path/to/target }
+  # - { id: blackbox_exporter, path: /path/to/target, path_prefix: '' }
 
 # You can enable this variable to not add exporters defined in
 # prometheus_target_default_exporters

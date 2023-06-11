@@ -23,6 +23,27 @@ def test_check_hosts_added_simple(host):
     assert t3.content_string == \
         '    - application_AA\n'
 
+"""
+Test prefix functionality
+"""
+def test_check_hosts_added_prefix(host):
+    t1 = host.file('/opt/prefix_target1.yml')
+    t2 = host.file('/opt/prefix_target2.yml')
+    t3 = host.file('/opt/prefix/prefix_target3.yml')
+
+    assert t1.exists
+    assert t2.exists
+    assert t3.exists
+
+    assert t1.content_string == \
+        '    - application\n'
+
+
+    assert t2.content_string == \
+        '    - application\n'
+
+    assert t3.content_string == \
+        '    - application\n'
 
 """
 Test hook functionality
