@@ -254,6 +254,8 @@ Multiple exporters
     - role: kliwniloc.prometheus_target # deploy targets
       prometheus_target_exporter:
         - id: node_exporter # deploy node_exporter with default host
+        # deploy an exporter that is not specified in prometheus_target_exporter_defaults
+        - { host: exporter_without_id, path: /opt/simple_target4.yml }
         # deploy blackbox_exporter with multiple hosts
         - { id: blackbox_exporter, host: node1.example.org }
         - { id: blackbox_exporter, host: node2.example.org }

@@ -71,7 +71,7 @@ argument_specs:
         options:
           id:
             type: str
-            required: true
+            required: false
           path:
             type: str
             required: false

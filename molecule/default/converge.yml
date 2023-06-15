@@ -17,6 +17,7 @@
         - /opt/simple_target1.yml
         - /opt/simple_target2.yml
         - /opt/simple_target3.yml
+        - /opt/simple_target4.yml
 
   vars:
     prometheus_target_host: prometheus
@@ -34,6 +35,7 @@
         - id: node_exporter
         - { id: blackbox_exporter, host: test1 }
         - { id: blackbox_exporter, host: test2 }
+        - { host: exporter_without_id, path: /opt/simple_target4.yml }
     - role: kliwniloc.prometheus_target
       prometheus_target_exporter:
         - id: blackbox_exporter

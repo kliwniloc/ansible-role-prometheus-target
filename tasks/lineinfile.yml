@@ -1,12 +1,16 @@
 ---
 - name: Make sure targets are deployed
   ansible.builtin.lineinfile:
-    path: '{{ (item.path_prefix
-           | default(prometheus_target_exporter_defaults[item.id].path_prefix)
-           | default(prometheus_target_exporter_target_prefix)) ~
-           item.path | default(prometheus_target_exporter_defaults[item.id].path) }}'
+    path: '{{ (
+           item.path_prefix if item.path_prefix is defined else
+           (prometheus_target_exporter_defaults[item.id].path_prefix
+           | default(prometheus_target_exporter_target_prefix))
+           if item.id is defined)
+           ~
+           (item.path if item.path is defined
+           else prometheus_target_exporter_defaults[item.id].path if item.id is defined) | mandatory }}'
     line: '{{ prometheus_target_strategy_lineinfile_prefix ~
-           (item.host | default(prometheus_target_exporter_defaults[item.id].host)) ~
+           (item.host if item.host is defined else prometheus_target_exporter_defaults[item.id].host) | mandatory ~
            prometheus_target_strategy_lineinfile_suffix }}'
     state: present
   become: true

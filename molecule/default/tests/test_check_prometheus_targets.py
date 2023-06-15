@@ -7,10 +7,12 @@ def test_check_hosts_added_simple(host):
     t1 = host.file('/opt/simple_target1.yml')
     t2 = host.file('/opt/simple_target2.yml')
     t3 = host.file('/opt/simple_target3.yml')
+    t4 = host.file('/opt/simple_target4.yml')
 
     assert t1.exists
     assert t2.exists
     assert t3.exists
+    assert t4.exists
 
     assert t1.content_string == \
         '    - application\n'
@@ -22,6 +24,9 @@ def test_check_hosts_added_simple(host):
 
     assert t3.content_string == \
         '    - application_AA\n'
+
+    assert t4.content_string == \
+        '    - exporter_without_id\n'
 
 """
 Test prefix functionality
