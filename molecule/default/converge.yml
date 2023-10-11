@@ -83,7 +83,7 @@
 ################################################################################
 ################################################################################
 - name: Deploy with hooks
-  hosts: application
+  hosts: application_group
   pre_tasks:
     - name: Create targets
       ansible.builtin.file:
@@ -96,23 +96,23 @@
       delegate_to: '{{ prometheus_target_host }}'
       loop:
         - /opt/hook_target.yml
-        - /opt/hook1
-        - /opt/hook1
+        - /opt/hook2
 
   vars:
     prometheus_target_host: prometheus
     prometheus_target_handler_command_enabled: true
     prometheus_target_handler_command:
-      cmd: touch /opt/hook1
+      cmd: mkdir /opt/hook1 # Fails if run twice
+    prometheus_target_handler_command_run_once: true
     prometheus_target_handler_shell_enabled: true
     prometheus_target_handler_shell:
-      cmd: touch /opt/hook2
+      cmd: echo hello >> /opt/hook2
 
   roles:
     - role: kliwniloc.prometheus_target
       prometheus_target_exporter:
         - id: node_exporter
-          host: application
+          host: '{{ inventory_hostname }}'
           path: /opt/hook_target.yml
 
 ################################################################################

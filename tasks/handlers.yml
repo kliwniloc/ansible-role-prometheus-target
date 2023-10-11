@@ -13,6 +13,7 @@
   become_method: '{{ prometheus_target_handler_command_become_method | default(omit) }}'
   become_user: '{{ prometheus_target_handler_command_become_user | default(omit) }}'
   delegate_to: '{{ prometheus_target_host }}'
+  run_once: '{{ prometheus_target_handler_command_run_once }}'
   when: prometheus_target_handler_command_enabled
 
 - name: Run shell hook
@@ -29,4 +30,5 @@
   become_method: '{{ prometheus_target_handler_shell_become_method | default(omit) }}'
   become_user: '{{ prometheus_target_handler_shell_become_user | default(omit) }}'
   delegate_to: '{{ prometheus_target_host }}'
+  run_once: '{{ prometheus_target_handler_shell_run_once }}'
   when: prometheus_target_handler_shell_enabled

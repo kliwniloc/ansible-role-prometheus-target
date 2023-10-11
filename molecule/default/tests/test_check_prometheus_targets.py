@@ -58,12 +58,20 @@ def test_check_hosts_added_hooks(host):
     t2 = host.file('/opt/hook1')
     t3 = host.file('/opt/hook2')
 
-    assert t1.content_string == \
-        '    - application\n'
-
+    assert t1.exists
     assert t2.exists
     assert t3.exists
 
+    assert t1.content_string == \
+        '    - application\n' \
+        '    - application2\n' \
+        or t1.content_string == \
+        '    - application2\n' \
+        '    - application\n'
+
+    assert t3.content_string == \
+        'hello\n' \
+        'hello\n'
 
 """
 Test lineinfile strategy parameters

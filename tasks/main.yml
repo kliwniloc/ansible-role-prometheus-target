@@ -2,3 +2,10 @@
 - name: Select strategy
   ansible.builtin.include_tasks:
     file: '{{ prometheus_target_strategy }}.yml'
+  vars:
+    changed: false
+
+- name: Run handlers
+  ansible.builtin.include_tasks:
+    file: handlers.yml
+  when: changed

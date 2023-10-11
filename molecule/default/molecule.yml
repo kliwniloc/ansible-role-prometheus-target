@@ -20,6 +20,15 @@ platforms:
           com.docker.network.driver.mtu: 1420
     networks:
       - name: molecule-container-net
+    groups: [application_group]
+
+  - name: application2
+    image: ${MOLECULE_DISTRO:-debian:10}
+    dockerfile: Dockerfile.j2
+    pre_build_image: false
+    networks:
+      - name: molecule-container-net
+    groups: [application_group]
 
   - name: prometheus
     image: ${MOLECULE_DISTRO:-debian:10}

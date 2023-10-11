@@ -36,6 +36,11 @@ argument_specs:
         required: false
         default: true
 
+      prometheus_target_handler_command_run_once:
+        type: bool
+        required: false
+        default: false
+
       prometheus_target_handler_command:
         type: dict
         required: false
@@ -51,6 +56,11 @@ argument_specs:
         type: bool
         required: false
         default: true
+
+      prometheus_target_handler_shell_run_once:
+        type: bool
+        required: false
+        default: false
 
       prometheus_target_handler_shell:
         type: dict

@@ -31,6 +31,14 @@ prometheus_target_handler_command_become: true
 # prometheus_target_handler_command_become_method:
 # prometheus_target_handler_command_become_user:
 
+# By default the target handler will run for every host added on the delegated
+# host. This means that if you add 20 hosts as your target, you will run the
+# handler 20 times on your delegated host. This is useful if you need some host
+# specific variables to run on the delegated host however often times, such as
+# when using it to create a commit in a repository, you only need to do it once
+# per run and not per host.
+prometheus_target_handler_command_run_once: false
+
 # This is the configuration for the command module. For documentation see:
 # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/command_module.html
 # ---
@@ -54,6 +62,10 @@ prometheus_target_handler_shell_enabled: false
 prometheus_target_handler_shell_become: true
 # prometheus_target_handler_shell_become_method:
 # prometheus_target_handler_shell_become_user:
+
+# This will configure the shell handler to run once.
+# See documentation for prometheus_target_handler_command_run_once above.
+prometheus_target_handler_shell_run_once: false
 
 # This is the configuration for the shell module. For documentation see:
 # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html

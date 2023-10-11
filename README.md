@@ -141,6 +141,10 @@ You can enable or disable the handlers via the `prometheus_target_handler_comman
 behavior via `prometheus_target_handler_command_become*`/
 `prometheus_target_handler_shell_become*`.
 
+To run the hook per play instead of per hosts, meaning it only runs once, you
+can set the `prometheus_target_handler_command_run_once` /
+`prometheus_target_handler_shell_run_once` hooks to `true`.
+
 The `prometheus_target_handler_command` and `prometheus_target_handler_shell`
 variables map the options of their respective Ansible
 [command](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/command_module.html)
@@ -153,12 +157,14 @@ prometheus_target_handler_command_enabled: false
 prometheus_target_handler_command_become: true
 # prometheus_target_handler_command_become_method:
 # prometheus_target_handler_command_become_user:
+prometheus_target_handler_command_run_once: false
 prometheus_target_handler_command: {}
 
 prometheus_target_handler_shell_enabled: false
 prometheus_target_handler_shell_become: true
 # prometheus_target_handler_shell_become_method:
 # prometheus_target_handler_shell_become_user:
+prometheus_target_handler_shell_run_once: false
 prometheus_target_handler_shell: {}
 ```
 
