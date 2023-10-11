@@ -321,6 +321,91 @@ prometheus_target_exporter_defaults:
 +    - agent-m-2:9100
 ```
 
+Troubleshooting
+---------------
+
+* **Running into locks using handlers**
+
+  By default, the handler runs for every host that is changed. This can cause
+  issues with locking mechanisms when two hooks run simultaneously.
+  A common example of this is when trying to commit the changes to a repository
+  on the Prometheus host like this:
+
+  ```yaml
+  prometheus_target_handler_shell_enabled: true
+  prometheus_target_handler_shell:
+      chdir: /opt/monitoring
+      cmd: |
+          git add prometheus/targets
+          git commit -m "[ANSIBLE] Add target"
+          git push
+  ```
+
+  When deploying targets on multiple hosts you might get an error like this:
+
+  ```txt
+  fatal: [application -> prometheus]: FAILED! => {"changed": true, "cmd": "git add prometheus/targets\ngit commit -m \"[ANSIBLE] Add target\"\ngit push\n", "delta": "0:00:00.159961", "end": "2023-10-04 17:14:22.711445", "msg": "non-zero return code", "rc": 1, "start": "2023-10-04 17:14:22.551484", "stderr": "remote: error: cannot lock ref 'refs/heads/master': is at 8b37e6aead861cf15a8726b3cfb48ae6dd9d98e6 but expected b372bb8bac22770f241c41efdc9e7a3581060053        \nTo ssh://git_repository\n ! [remote rejected] master -> master (failed to update ref)\nerror: failed to push some refs to 'ssh://git_repository'", "stderr_lines": ["remote: error: cannot lock ref 'refs/heads/master': is at 8b37e6aead861cf15a8726b3cfb48ae6dd9d98e6 but expected b372bb8bac22770f241c41efdc9e7a3581060053        ", "To ssh://git_repository", " ! [remote rejected] master -> master (failed to update ref)", "error: failed to push some refs to 'ssh://git_repository'"], "stdout": "[master 8b37e6a] [ANSIBLE] Add target\n 1 file changed, 3 insertions", "stdout_lines": ["[master 8b37e6a] [ANSIBLE] Add target", " 1 file changed, 3 insertions"]}
+  ```
+
+  To fix this issue you can use the `run_once` options on the handler like
+  this:
+
+  ```yaml
+  prometheus_target_handler_shell_enabled: true
+  prometheus_target_handler_shell_run_once: true
+  prometheus_target_handler_shell:
+      chdir: /opt/monitoring
+      cmd: |
+          git add prometheus/targets
+          git commit -m "[ANSIBLE] Add target"
+          git push
+  ```
+
+* **Running into the OpenSSH Max Open Connections limit:**
+
+  SSH Servers often limit the maximum amount of sessions that may be active /
+  may be currently activating. When deploying the Prometheus target to a large
+  amount of hosts (with many Ansible forks like `-f 100`), the role will make
+  an SSH connection to the Prometheus server for each host, and you can get
+  an error like this:
+
+  ```txt
+  failed: [application -> prometheus] (item={'id': 'agent'}) => {"ansible_loop_var": "item", "item": {"id": "agent"}, "msg": "Data could not be sent to remote host \"prometheus\". Make sure this host can be reached over ssh: mux_client_request_session: session request failed: Session open refused by peer\r\nkex_exchange_identification: read: Connection reset by peer\r\nConnection reset by 0.0.0.0 port 22\r\n", "unreachable": true}
+  fatal: [application -> {{ prometheus_target_host }}]: UNREACHABLE! => {"changed": false, "msg": "All items completed", "results": [{"ansible_loop_var": "item", "item": {"id": "agent"}, "msg": "Data could not be sent to remote host \"prometheus\". Make sure this host can be reached over ssh: mux_client_request_session: session request failed: Session open refused by peer\r\nkex_exchange_identification: read: Connection reset by peer\r\nConnection reset by 0.0.0.0 port 22\r\n", "unreachable": true}]}
+  ```
+
+  A quick workaround is to just limit the forks of your `ansible-playbook`
+  command to something that won't overload your server like this:
+  `ansible-playbook -f 1 playbook.yml`.
+
+  To permanently fix the issue you can increase the `MaxSession` and
+  `MaxStartups` values in your `sshd_config` of the Prometheus host.
+
+  ```man
+  MaxSessions
+      Specifies the maximum number of open shell, login or subsystem
+      (e.g. sftp) sessions permitted per network connection.  Multiple
+      sessions may be established by clients that support connection
+      multiplexing.  Setting MaxSessions to 1 will effectively disable
+      session multiplexing, whereas setting it to 0 will prevent all
+      shell, login and subsystem sessions while still permitting for-
+      warding.  The default is 10.
+
+  MaxStartups
+      Specifies the maximum number of **concurrent   unauthenticated con-
+      nections to the SSH daemon.**  Additional connections will be
+      dropped until authentication succeeds or the LoginGraceTime
+      expires for a connection.  The default is 10:30:100.
+
+      Alternatively, random early drop can be enabled by specifying the
+      three colon separated values ``start:rate:full'' (e.g.
+      "10:30:60").  sshd(8) will refuse connection attempts with a
+      probability of ``rate/100'' (30%) if there are currently
+      ``start'' (10) unauthenticated connections.  The probability
+      increases linearly and all connection attempts are refused if the
+      number of unauthenticated connections reaches ``full'' (60).
+  ```
+
 Dependencies
 ------------
 
