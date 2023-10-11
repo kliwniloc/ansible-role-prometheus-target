@@ -3,7 +3,6 @@ dependencies: []
 
 galaxy_info:
   role_name: prometheus_target
-  standalone: true
   author: kliwniloc
   description: Role for adding targets to prometheus instance
   license: license (MIT)
