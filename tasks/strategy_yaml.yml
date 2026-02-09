@@ -39,7 +39,11 @@
         {%- else -%}
           {%- set filtered_targets = group.targets | reject('equalto', _target_host) | list -%}
           {%- if filtered_targets | length > 0 -%}
-            {%- set _ = ns.result.append({'labels': group.labels, 'targets': filtered_targets}) -%}
+            {%- if group_labels | length > 0 -%}
+              {%- set _ = ns.result.append({'labels': group_labels, 'targets': filtered_targets}) -%}
+            {%- else -%}
+              {%- set _ = ns.result.append({'targets': filtered_targets}) -%}
+            {%- endif -%}
           {%- endif -%}
         {%- endif -%}
       {%- endfor -%}
