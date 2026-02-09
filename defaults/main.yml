@@ -126,10 +126,15 @@ prometheus_target_exporter_defaults: {}
   # node_exporter:
   #   path: /opt/prometheus/targets.yml
   #   host: '{{ inventory_hostname }}:9100'
+  #   labels:  # Labels to match when using yaml strategy
+  #     severity: warning
+  #     job: external
   # blackbox_exporter:
   #   path: /opt/targets/blackbox.yml
   #   host: 'https://{{ hostvars[inventory_hostname].ansible_host }}'
   #   path_prefix: ''
+  #   labels:
+  #     severity: critical
 
 # This is where you specify the exporters that should be deployed to prometheus.
 # You should configure this on a per play basis. If you wish to configure
@@ -141,6 +146,10 @@ prometheus_target_exporter: []
   #   path: /path/to/targets/file/on/prometheus/host
   #   # overwrites: prometheus_target_exporter_defaults.node_exporter.host
   #   host: '{{ inventory_hostname }}:9100'
+  #   # labels to match the target group in the YAML file (yaml strategy only)
+  #   labels:
+  #     severity: warning
+  #     job: external
 
 # This is a list of exporters that will be appended to the
 # prometheus_target_exporter variable. duplicate exporters in

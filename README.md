@@ -55,10 +55,15 @@ prometheus_target_exporter_defaults: {}
   # node_exporter:
   #   path: /opt/prometheus/targets.yml
   #   host: '{{ inventory_hostname }}:9100'
+  #   labels:  # Labels to match when using yaml strategy
+  #     severity: warning
+  #     job: external
   # blackbox_exporter:
   #   path: /opt/targets/blackbox.yml
   #   host: 'https://{{ hostvars[inventory_hostname].ansible_host }}'
   #   path_prefix: ''
+  #   labels:
+  #     severity: critical
 
 prometheus_target_exporter: []
 ```
@@ -97,7 +102,8 @@ The strategy decides how exactly targets are added to the targets file and more
 importantly how to handle existing configuration.
 
 * `lineinfile` is the default strategy and simply *appends* a line to the target
-  file if it isn't already there.
+  file if it isn't already there. **Note:** Configured `labels` are ignored by
+  this strategy.
 * `yaml` *parses* the yaml target file and adds the host to it. This might mess
   with the readability of your yaml file, and you should avoid it if you edit
   the yaml file manually as well.
@@ -130,6 +136,107 @@ So the target file should look something like this:
     targets:
 +     - host:9100
 ```
+
+`yaml` parses the YAML target file and adds the host to the target group that
+matches the specified labels. This strategy is useful when you have multiple
+target groups with different labels in a single file and want to automatically
+place hosts in the correct group.
+
+**Warning:** This strategy is destructive for comments and custom formatting. The
+file is parsed and regenerated on each run, which means any comments, blank lines
+between entries, or custom formatting will be lost. Only use this strategy if the
+target file is fully managed by Ansible.
+
+The `yaml` strategy:
+
+* Reads and parses the existing YAML target file
+* Finds the target group where labels **exactly match** the specified labels
+* Adds the host to that group's targets list (if not already present)
+* If no matching group exists, creates a new target group with the specified labels
+* If a host exists in a group with different labels, it is moved to the matching group
+* Creates the target file if it doesn't exist
+* Hosts without labels are matched to target groups without labels
+
+Labels can be specified in `prometheus_target_exporter_defaults` and/or
+`prometheus_target_exporter`. Labels from both are **merged**, with the
+exporter-level labels taking precedence over defaults.
+
+Example target file structure:
+
+```yaml
+- labels:
+    severity: warning
+    job: external
+  targets:
+    - host1.example.com:9100
+    - host2.example.com:9100
+
+- labels:
+    severity: critical
+    job: internal
+  targets:
+    - host3.example.com:9100
+```
+
+Example playbook using the `yaml` strategy:
+
+```yaml
+- name: Deploy node exporter with yaml strategy
+  hosts: myhost
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_strategy: yaml
+    prometheus_target_exporter_defaults:
+      node_exporter:
+        path: /opt/prometheus/targets/node.yml
+        host: '{{ inventory_hostname }}:9100'
+        labels:
+          severity: warning
+          job: external
+          alert_group: node_exporters
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - id: node_exporter
+        # Override severity label for this specific exporter
+        - id: node_exporter
+          host: '{{ inventory_hostname }}:9115'
+          labels:
+            severity: critical  # Merged with defaults: {severity: critical, job: external, alert_group: node_exporters}
+```
+
+After running the playbook on `myhost`, the target file `/opt/prometheus/targets/node.yml`
+will be updated from the example above to:
+
+```yaml
+- labels:
+    job: external
+    severity: warning
+  targets:
+    - host1.example.com:9100
+    - host2.example.com:9100
+    - myhost:9100
+
+- labels:
+    job: internal
+    severity: critical
+  targets:
+    - host3.example.com:9100
+
+- labels:
+    alert_group: node_exporters
+    job: external
+    severity: critical
+  targets:
+    - myhost:9115
+```
+
+The first exporter (`id: node_exporter`) was added to the existing group with
+matching labels (`severity: warning`, `job: external`). Since the defaults also
+include `alert_group: node_exporters`, but no existing group has all three labels,
+the second exporter created a new target group.
 
 There are a few handlers that are notified if a new target is added. You will
 want to use those to reload your Prometheus instance after adding modifying

@@ -1,0 +1,18 @@
+---
+- name: Set exporter variables
+  vars:
+    _defaults: '{{ prometheus_target_exporter_defaults[item.id] | default({}) if item.id is defined else {} }}'
+  ansible.builtin.set_fact:
+    _target_path: >-
+      {{ (item.path_prefix if item.path_prefix is defined else
+         (_defaults.path_prefix | default(prometheus_target_exporter_target_prefix)))
+         ~
+         (item.path if item.path is defined else _defaults.path) | mandatory }}
+    _target_host: >-
+      {{ (item.host if item.host is defined else _defaults.host) | mandatory }}
+    _target_labels: >-
+      {{ (_defaults.labels | default({})) | combine(item.labels | default({})) }}
+
+- name: Execute strategy
+  ansible.builtin.include_tasks:
+    file: strategy_{{ prometheus_target_strategy }}.yml

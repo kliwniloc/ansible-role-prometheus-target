@@ -24,7 +24,7 @@ argument_specs:
         default: lineinfile
         choices:
           - lineinfile
-          # More to be added
+          - yaml
 
       prometheus_target_handler_command_enabled:
         type: bool
@@ -91,6 +91,10 @@ argument_specs:
           host:
             type: str
             required: false
+          labels:
+            type: dict
+            required: false
+            description: Labels to match the target group in the YAML file (yaml strategy only)
 
       prometheus_target_default_exporters:
         type: list

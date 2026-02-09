@@ -1,11 +1,13 @@
 ---
-- name: Select strategy
+- name: Process all exporters
   ansible.builtin.include_tasks:
-    file: '{{ prometheus_target_strategy }}.yml'
-  vars:
-    changed: false
+    file: process_exporter.yml
+  loop: '{{ prometheus_target_exporter +
+         ([] if prometheus_target_skip_default_exporters else prometheus_target_default_exporters) }}'
+  loop_control:
+    loop_var: item
 
 - name: Run handlers
   ansible.builtin.include_tasks:
     file: handlers.yml
-  when: changed
+  when: changed | default(false)

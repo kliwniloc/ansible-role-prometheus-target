@@ -1,0 +1,13 @@
+---
+- name: Deploy target via lineinfile
+  ansible.builtin.lineinfile:
+    path: '{{ _target_path }}'
+    line: '{{ prometheus_target_strategy_lineinfile_prefix ~ _target_host ~ prometheus_target_strategy_lineinfile_suffix }}'
+    state: present
+  delegate_to: '{{ prometheus_target_host }}'
+  become: true
+  register: _lineinfile_result
+
+- name: Track changes
+  ansible.builtin.set_fact:
+    changed: '{{ changed | default(false) or _lineinfile_result.changed }}'
