@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.0] - 2026-02-09
+
+### Added
+
+- Support for `yaml` strategy to read multiple targets per file (commit `049689c`).
+
+### Documentation
+
+- `README.md`: make Troubleshooting section more parsable (commit `7c09cd3`).
+
 ## [1.2.0] - 2023-10-11
 
 ### Added
