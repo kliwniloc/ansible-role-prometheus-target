@@ -1,0 +1,45 @@
+---
+name: Molecule
+
+"on":
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  molecule:
+    name: Run Molecule Scenario
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario:
+          - default
+
+    env:
+      PY_COLORS: "1"
+      ANSIBLE_FORCE_COLOR: "1"
+      ANSIBLE_ALLOW_BROKEN_CONDITIONALS: "True"
+      ANSIBLE_INJECT_INVOCATION: "true"
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ansible-core docker molecule molecule-plugins[docker] pytest pytest-testinfra requests
+
+      - name: Install Ansible collections
+        run: ansible-galaxy collection install community.crypto
+
+      - name: Run Molecule scenario
+        run: molecule test -s "${{ matrix.scenario }}"
