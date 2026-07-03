@@ -6,13 +6,13 @@
   pre_tasks:
     - name: Create targets
       ansible.builtin.file:
-        path: '{{ item }}'
+        path: "{{ item }}"
         state: touch
         modification_time: preserve
         access_time: preserve
-        mode: '0644'
+        mode: "0644"
       become: true
-      delegate_to: '{{ prometheus_target_host }}'
+      delegate_to: "{{ prometheus_target_host }}"
       loop:
         - /opt/simple_target1.yml
         - /opt/simple_target2.yml
@@ -24,10 +24,10 @@
     prometheus_target_exporter_defaults:
       node_exporter:
         path: /opt/simple_target1.yml
-        host: '{{ inventory_hostname }}'
+        host: "{{ inventory_hostname }}"
       blackbox_exporter:
         path: /opt/simple_target2.yml
-        host: '{{ inventory_hostname }}_AA'
+        host: "{{ inventory_hostname }}_AA"
 
   roles:
     - role: kliwniloc.prometheus_target
@@ -48,13 +48,13 @@
   pre_tasks:
     - name: Create targets
       ansible.builtin.file:
-        path: '{{ item.path }}'
-        state: '{{ item.state }}'
+        path: "{{ item.path }}"
+        state: "{{ item.state }}"
         modification_time: preserve
         access_time: preserve
-        mode: '0644'
+        mode: "0644"
       become: true
-      delegate_to: '{{ prometheus_target_host }}'
+      delegate_to: "{{ prometheus_target_host }}"
       loop:
         - { state: touch, path: /opt/prefix_target1.yml }
         - { state: touch, path: /opt/prefix_target2.yml }
@@ -67,17 +67,17 @@
     prometheus_target_exporter_defaults:
       node_exporter:
         path: prefix_target1.yml
-        host: '{{ inventory_hostname }}'
+        host: "{{ inventory_hostname }}"
       blackbox_exporter:
         path: prefix_target_not_exist.yml
-        host: '{{ inventory_hostname }}'
+        host: "{{ inventory_hostname }}"
         path_prefix: /opt/prefix/
 
   roles:
     - role: kliwniloc.prometheus_target
       prometheus_target_exporter:
         - id: node_exporter
-        - { id: node_exporter, path: /opt/prefix_target2.yml, path_prefix: '' }
+        - { id: node_exporter, path: /opt/prefix_target2.yml, path_prefix: "" }
         - { id: blackbox_exporter, path: prefix_target3.yml }
 
 ################################################################################
@@ -87,13 +87,13 @@
   pre_tasks:
     - name: Create targets
       ansible.builtin.file:
-        path: '{{ item }}'
+        path: "{{ item }}"
         state: touch
         modification_time: preserve
         access_time: preserve
-        mode: '0644'
+        mode: "0644"
       become: true
-      delegate_to: '{{ prometheus_target_host }}'
+      delegate_to: "{{ prometheus_target_host }}"
       loop:
         - /opt/hook_target.yml
         - /opt/hook2
@@ -112,7 +112,7 @@
     - role: kliwniloc.prometheus_target
       prometheus_target_exporter:
         - id: node_exporter
-          host: '{{ inventory_hostname }}'
+          host: "{{ inventory_hostname }}"
           path: /opt/hook_target.yml
 
 ################################################################################
@@ -124,14 +124,14 @@
       ansible.builtin.user:
         name: prometheus
       become: true
-      delegate_to: '{{ prometheus_target_host }}'
+      delegate_to: "{{ prometheus_target_host }}"
 
     - name: Create target
       ansible.builtin.copy:
         dest: /opt/lineinfile.yml
         owner: prometheus
         group: prometheus
-        mode: '0600'
+        mode: "0600"
         force: false
         # yamllint disable rule:indentation
         content: |
@@ -141,11 +141,11 @@
             - existing:9100
         # yamllint enable rule:indentation
       become: true
-      delegate_to: '{{ prometheus_target_host }}'
+      delegate_to: "{{ prometheus_target_host }}"
 
   vars:
     prometheus_target_host: prometheus
-    prometheus_target_strategy_lineinfile_prefix: '  - '
+    prometheus_target_strategy_lineinfile_prefix: "  - "
     prometheus_target_strategy_lineinfile_suffix: :9100
 
   roles:
@@ -153,4 +153,4 @@
       prometheus_target_exporter:
         - id: node_exporter
           path: /opt/lineinfile.yml
-          host: '{{ inventory_hostname }}'
+          host: "{{ inventory_hostname }}"

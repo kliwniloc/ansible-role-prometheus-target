@@ -95,8 +95,8 @@ prometheus_target_handler_shell_run_once: false
 # This configuration is mostly used for globally indenting all of your targets
 # in their target configuration and thus keeping this configuration away from
 # the exporter host variable.
-prometheus_target_strategy_lineinfile_prefix: '    - '
-prometheus_target_strategy_lineinfile_suffix: ''
+prometheus_target_strategy_lineinfile_prefix: "    - "
+prometheus_target_strategy_lineinfile_suffix: ""
 
 
 ################################################################################
@@ -109,9 +109,9 @@ prometheus_target_strategy_lineinfile_suffix: ''
 # you can define your remaining target files as just target.yml instead of
 # /opt/prometheus/target.yml
 # In case you have a few exporters that reside in different directories you may
-# ignore the prefix by specifying `path_prefix: ''` in the exporter default
+# ignore the prefix by specifying `path_prefix: ""` in the exporter default
 # or the enabled exporter config.
-prometheus_target_exporter_target_prefix: ''
+prometheus_target_exporter_target_prefix: ""
 
 # This will configure the default settings for specified exporters.
 # The key in this dict should map to the possible id in the specified exporter
@@ -125,14 +125,14 @@ prometheus_target_exporter_target_prefix: ''
 prometheus_target_exporter_defaults: {}
   # node_exporter:
   #   path: /opt/prometheus/targets.yml
-  #   host: '{{ inventory_hostname }}:9100'
+  #   host: "{{ inventory_hostname }}:9100"
   #   labels:  # Labels to match when using yaml strategy
   #     severity: warning
   #     job: external
   # blackbox_exporter:
   #   path: /opt/targets/blackbox.yml
-  #   host: 'https://{{ hostvars[inventory_hostname].ansible_host }}'
-  #   path_prefix: ''
+  #   host: "https://{{ hostvars[inventory_hostname].ansible_host }}"
+  #   path_prefix: ""
   #   labels:
   #     severity: critical
 
@@ -145,7 +145,7 @@ prometheus_target_exporter: []
   #   # overwrites prometheus_target_exporter_defaults.node_exporter.path
   #   path: /path/to/targets/file/on/prometheus/host
   #   # overwrites: prometheus_target_exporter_defaults.node_exporter.host
-  #   host: '{{ inventory_hostname }}:9100'
+  #   host: "{{ inventory_hostname }}:9100"
   #   # labels to match the target group in the YAML file (yaml strategy only)
   #   labels:
   #     severity: warning
@@ -157,7 +157,7 @@ prometheus_target_exporter: []
 # ignored.
 prometheus_target_default_exporters: []
   # - { id: node_exporter }
-  # - { id: blackbox_exporter, path: /path/to/target, path_prefix: '' }
+  # - { id: blackbox_exporter, path: /path/to/target, path_prefix: "' }
 
 # You can enable this variable to not add exporters defined in
 # prometheus_target_default_exporters

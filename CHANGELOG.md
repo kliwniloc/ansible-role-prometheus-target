@@ -2,7 +2,7 @@
 
 ## [1.3.0] - 2026-02-09
 
-### Added
+### Added: yaml strategy
 
 - Support for `yaml` strategy to read multiple targets per file (commit `049689c`).
 
@@ -12,7 +12,7 @@
 
 ## [1.2.0] - 2023-10-11
 
-### Added
+### Added: run_once option
 
 - Add `run_once` option for command and shell handlers.
 
@@ -23,7 +23,7 @@
 
 ## [1.1.0] - 2023-06-15
 
-### Added
+### Added: prefix option
 
 - Prefix option for target files (`579b168`).
 - Ability to define exporters without id (`232bdca`).

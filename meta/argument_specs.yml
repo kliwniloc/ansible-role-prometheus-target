@@ -16,7 +16,7 @@ argument_specs:
       prometheus_target_exporter_target_prefix:
         type: str
         required: false
-        default: ''
+        default: ""
 
       prometheus_target_strategy:
         type: str

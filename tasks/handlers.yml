@@ -1,34 +1,34 @@
 ---
 - name: Run command hook # noqa inline-env-var
   ansible.builtin.command:
-    argv: '{{ prometheus_target_handler_command.argv | default(omit) }}'
-    chdir: '{{ prometheus_target_handler_command.chdir | default(omit) }}'
-    cmd: '{{ prometheus_target_handler_command.cmd | default(omit) }}'
-    creates: '{{ prometheus_target_handler_command.creates | default(omit) }}'
-    free_form: '{{ prometheus_target_handler_command.free_form | default(omit) }}'
-    removes: '{{ prometheus_target_handler_command.removes | default(omit) }}'
-    stdin: '{{ prometheus_target_handler_command.stdin | default(omit) }}'
-    stdin_add_newline: '{{ prometheus_target_handler_command.stdin_add_newline | default(omit) }}'
-  become: '{{ prometheus_target_handler_command_become }}'
-  become_method: '{{ prometheus_target_handler_command_become_method | default(omit) }}'
-  become_user: '{{ prometheus_target_handler_command_become_user | default(omit) }}'
-  delegate_to: '{{ prometheus_target_host }}'
-  run_once: '{{ prometheus_target_handler_command_run_once }}'
+    argv: "{{ prometheus_target_handler_command.argv | default(omit) }}"
+    chdir: "{{ prometheus_target_handler_command.chdir | default(omit) }}"
+    cmd: "{{ prometheus_target_handler_command.cmd | default(omit) }}"
+    creates: "{{ prometheus_target_handler_command.creates | default(omit) }}"
+    free_form: "{{ prometheus_target_handler_command.free_form | default(omit) }}"
+    removes: "{{ prometheus_target_handler_command.removes | default(omit) }}"
+    stdin: "{{ prometheus_target_handler_command.stdin | default(omit) }}"
+    stdin_add_newline: "{{ prometheus_target_handler_command.stdin_add_newline | default(omit) }}"
+  become: "{{ prometheus_target_handler_command_become }}"
+  become_method: "{{ prometheus_target_handler_command_become_method | default(omit) }}"
+  become_user: "{{ prometheus_target_handler_command_become_user | default(omit) }}"
+  delegate_to: "{{ prometheus_target_host }}"
+  run_once: "{{ prometheus_target_handler_command_run_once }}"
   when: prometheus_target_handler_command_enabled
 
 - name: Run shell hook
   ansible.builtin.shell:
-    chdir: '{{ prometheus_target_handler_shell.chdir | default(omit) }}'
-    cmd: '{{ prometheus_target_handler_shell.cmd | default(omit) }}'
-    creates: '{{ prometheus_target_handler_shell.creates | default(omit) }}'
-    executable: '{{ prometheus_target_handler_shell.executable | default(omit) }}'
-    free_form: '{{ prometheus_target_handler_shell.free_form | default(omit) }}'
-    removes: '{{ prometheus_target_handler_shell.removes | default(omit) }}'
-    stdin: '{{ prometheus_target_handler_shell.stdin | default(omit) }}'
-    stdin_add_newline: '{{ prometheus_target_handler_shell.stdin_add_newline | default(omit) }}'
-  become: '{{ prometheus_target_handler_shell_become }}'
-  become_method: '{{ prometheus_target_handler_shell_become_method | default(omit) }}'
-  become_user: '{{ prometheus_target_handler_shell_become_user | default(omit) }}'
-  delegate_to: '{{ prometheus_target_host }}'
-  run_once: '{{ prometheus_target_handler_shell_run_once }}'
+    chdir: "{{ prometheus_target_handler_shell.chdir | default(omit) }}"
+    cmd: "{{ prometheus_target_handler_shell.cmd | default(omit) }}"
+    creates: "{{ prometheus_target_handler_shell.creates | default(omit) }}"
+    executable: "{{ prometheus_target_handler_shell.executable | default(omit) }}"
+    free_form: "{{ prometheus_target_handler_shell.free_form | default(omit) }}"
+    removes: "{{ prometheus_target_handler_shell.removes | default(omit) }}"
+    stdin: "{{ prometheus_target_handler_shell.stdin | default(omit) }}"
+    stdin_add_newline: "{{ prometheus_target_handler_shell.stdin_add_newline | default(omit) }}"
+  become: "{{ prometheus_target_handler_shell_become }}"
+  become_method: "{{ prometheus_target_handler_shell_become_method | default(omit) }}"
+  become_user: "{{ prometheus_target_handler_shell_become_user | default(omit) }}"
+  delegate_to: "{{ prometheus_target_host }}"
+  run_once: "{{ prometheus_target_handler_shell_run_once }}"
   when: prometheus_target_handler_shell_enabled

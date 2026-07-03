@@ -1,7 +1,7 @@
 ---
 - name: Set exporter variables
   vars:
-    _defaults: '{{ prometheus_target_exporter_defaults[item.id] | default({}) if item.id is defined else {} }}'
+    _defaults: "{{ prometheus_target_exporter_defaults[item.id] | default({}) if item.id is defined else {} }}"
   ansible.builtin.set_fact:
     _target_path: >-
       {{ (item.path_prefix if item.path_prefix is defined else

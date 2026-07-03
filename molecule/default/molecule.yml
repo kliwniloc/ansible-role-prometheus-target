@@ -2,15 +2,12 @@
 dependency:
   name: galaxy
 
-
 driver:
   name: docker
 
-
 platforms:
-
   - name: application
-    image: ${MOLECULE_DISTRO:-debian:10}
+    image: ${MOLECULE_DISTRO:-debian:12}
     dockerfile: Dockerfile.j2
     pre_build_image: false
     docker_networks:
@@ -23,7 +20,7 @@ platforms:
     groups: [application_group]
 
   - name: application2
-    image: ${MOLECULE_DISTRO:-debian:10}
+    image: ${MOLECULE_DISTRO:-debian:12}
     dockerfile: Dockerfile.j2
     pre_build_image: false
     networks:
@@ -31,18 +28,16 @@ platforms:
     groups: [application_group]
 
   - name: prometheus
-    image: ${MOLECULE_DISTRO:-debian:10}
+    image: ${MOLECULE_DISTRO:-debian:12}
     dockerfile: Dockerfile.j2
     pre_build_image: false
     networks:
       - name: molecule-container-net
 
-
 provisioner:
   name: ansible
   playbooks:
     converge: ${MOLECULE_PLAYBOOK:-converge.yml}
-
 
 verifier:
   name: testinfra
