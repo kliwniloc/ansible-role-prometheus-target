@@ -27,6 +27,22 @@ platforms:
       - name: molecule-container-net
     groups: [application_group]
 
+  - name: application3
+    image: ${MOLECULE_DISTRO:-debian:12}
+    dockerfile: Dockerfile.j2
+    pre_build_image: false
+    networks:
+      - name: molecule-container-net
+    groups: [application_group]
+
+  - name: application4
+    image: ${MOLECULE_DISTRO:-debian:12}
+    dockerfile: Dockerfile.j2
+    pre_build_image: false
+    networks:
+      - name: molecule-container-net
+    groups: [application_group]
+
   - name: prometheus
     image: ${MOLECULE_DISTRO:-debian:12}
     dockerfile: Dockerfile.j2

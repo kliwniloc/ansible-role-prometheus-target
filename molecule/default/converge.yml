@@ -1,123 +1,7 @@
 ---
 ################################################################################
 ################################################################################
-- name: Simple deploy
-  hosts: application
-  pre_tasks:
-    - name: Create targets
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: touch
-        modification_time: preserve
-        access_time: preserve
-        mode: "0644"
-      become: true
-      delegate_to: "{{ prometheus_target_host }}"
-      loop:
-        - /opt/simple_target1.yml
-        - /opt/simple_target2.yml
-        - /opt/simple_target3.yml
-        - /opt/simple_target4.yml
-
-  vars:
-    prometheus_target_host: prometheus
-    prometheus_target_exporter_defaults:
-      node_exporter:
-        path: /opt/simple_target1.yml
-        host: "{{ inventory_hostname }}"
-      blackbox_exporter:
-        path: /opt/simple_target2.yml
-        host: "{{ inventory_hostname }}_AA"
-
-  roles:
-    - role: kliwniloc.prometheus_target
-      prometheus_target_exporter:
-        - id: node_exporter
-        - { id: blackbox_exporter, host: test1 }
-        - { id: blackbox_exporter, host: test2 }
-        - { host: exporter_without_id, path: /opt/simple_target4.yml }
-    - role: kliwniloc.prometheus_target
-      prometheus_target_exporter:
-        - id: blackbox_exporter
-          path: /opt/simple_target3.yml
-
-################################################################################
-################################################################################
-- name: Prefix deploy
-  hosts: application
-  pre_tasks:
-    - name: Create targets
-      ansible.builtin.file:
-        path: "{{ item.path }}"
-        state: "{{ item.state }}"
-        modification_time: preserve
-        access_time: preserve
-        mode: "0644"
-      become: true
-      delegate_to: "{{ prometheus_target_host }}"
-      loop:
-        - { state: touch, path: /opt/prefix_target1.yml }
-        - { state: touch, path: /opt/prefix_target2.yml }
-        - { state: directory, path: /opt/prefix}
-        - { state: touch, path: /opt/prefix/prefix_target3.yml }
-
-  vars:
-    prometheus_target_host: prometheus
-    prometheus_target_exporter_target_prefix: /opt/
-    prometheus_target_exporter_defaults:
-      node_exporter:
-        path: prefix_target1.yml
-        host: "{{ inventory_hostname }}"
-      blackbox_exporter:
-        path: prefix_target_not_exist.yml
-        host: "{{ inventory_hostname }}"
-        path_prefix: /opt/prefix/
-
-  roles:
-    - role: kliwniloc.prometheus_target
-      prometheus_target_exporter:
-        - id: node_exporter
-        - { id: node_exporter, path: /opt/prefix_target2.yml, path_prefix: "" }
-        - { id: blackbox_exporter, path: prefix_target3.yml }
-
-################################################################################
-################################################################################
-- name: Deploy with hooks
-  hosts: application_group
-  pre_tasks:
-    - name: Create targets
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: touch
-        modification_time: preserve
-        access_time: preserve
-        mode: "0644"
-      become: true
-      delegate_to: "{{ prometheus_target_host }}"
-      loop:
-        - /opt/hook_target.yml
-        - /opt/hook2
-
-  vars:
-    prometheus_target_host: prometheus
-    prometheus_target_handler_command_enabled: true
-    prometheus_target_handler_command:
-      cmd: mkdir /opt/hook1 # Fails if run twice
-    prometheus_target_handler_command_run_once: true
-    prometheus_target_handler_shell_enabled: true
-    prometheus_target_handler_shell:
-      cmd: echo hello >> /opt/hook2
-
-  roles:
-    - role: kliwniloc.prometheus_target
-      prometheus_target_exporter:
-        - id: node_exporter
-          host: "{{ inventory_hostname }}"
-          path: /opt/hook_target.yml
-
-################################################################################
-################################################################################
-- name: Deploy with lineinfile
+- name: Lineinfile bootstrap and subsequent hosts
   hosts: application
   pre_tasks:
     - name: Create test user
@@ -126,20 +10,18 @@
       become: true
       delegate_to: "{{ prometheus_target_host }}"
 
-    - name: Create target
+    - name: Create lineinfile bootstrap target
       ansible.builtin.copy:
-        dest: /opt/lineinfile.yml
+        dest: /opt/lineinfile_bootstrap.yml
         owner: prometheus
         group: prometheus
         mode: "0600"
-        force: false
-        # yamllint disable rule:indentation
         content: |
           - labels:
               my: label
             targets:
             - existing:9100
-        # yamllint enable rule:indentation
+        force: false
       become: true
       delegate_to: "{{ prometheus_target_host }}"
 
@@ -151,6 +33,454 @@
   roles:
     - role: kliwniloc.prometheus_target
       prometheus_target_exporter:
+        - path: /opt/lineinfile_bootstrap.yml
+          host: "{{ inventory_hostname }}"
+
+################################################################################
+################################################################################
+- name: Lineinfile first host on empty file
+  hosts: application
+  pre_tasks:
+    - name: Create empty lineinfile target
+      ansible.builtin.copy:
+        dest: /opt/lineinfile_first_host.yml
+        owner: prometheus
+        group: prometheus
+        mode: "0600"
+        content: ""
+        force: false
+      become: true
+      delegate_to: "{{ prometheus_target_host }}"
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_strategy_lineinfile_prefix: "- "
+    prometheus_target_strategy_lineinfile_suffix: :9100
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - path: /opt/lineinfile_first_host.yml
+          host: "{{ inventory_hostname }}"
+
+################################################################################
+################################################################################
+- name: Lineinfile subsequent hosts and parallel writes
+  hosts: application_group
+  pre_tasks:
+    - name: Create lineinfile parallel target
+      ansible.builtin.copy:
+        dest: /opt/lineinfile_parallel.yml
+        owner: prometheus
+        group: prometheus
+        mode: "0600"
+        content: ""
+        force: false
+      become: true
+      delegate_to: "{{ prometheus_target_host }}"
+      run_once: true
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_strategy_lineinfile_prefix: "- "
+    prometheus_target_strategy_lineinfile_suffix: :9100
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - path: /opt/lineinfile_parallel.yml
+          host: "{{ inventory_hostname }}"
+
+################################################################################
+################################################################################
+- name: Lineinfile user edited file
+  hosts: application2
+  pre_tasks:
+    - name: Create user edited lineinfile target
+      ansible.builtin.copy:
+        dest: /opt/lineinfile_user_edited.yml
+        owner: prometheus
+        group: prometheus
+        mode: "0600"
+        content: |
+          # user comment
+          - labels:
+              env: prod
+            targets:
+            - existing:9100
+        force: false
+      delegate_to: "{{ prometheus_target_host }}"
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_strategy_lineinfile_prefix: "  - "
+    prometheus_target_strategy_lineinfile_suffix: :9100
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - path: /opt/lineinfile_user_edited.yml
+          host: "{{ inventory_hostname }}"
+
+################################################################################
+################################################################################
+- name: Lineinfile remove last host scenario
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Create single host lineinfile target
+      ansible.builtin.copy:
+        dest: /opt/lineinfile_remove_last.yml
+        owner: prometheus
+        group: prometheus
+        mode: "0600"
+        content: |
+          - labels:
+              env: stage
+            targets:
+              - application:9100
+        force: false
+      become: true
+      delegate_to: prometheus
+
+    - name: Remove last host line externally
+      ansible.builtin.lineinfile:
+        path: /opt/lineinfile_remove_last.yml
+        line: "    - application:9100"
+        state: absent
+      become: true
+      delegate_to: prometheus
+
+################################################################################
+################################################################################
+- name: YAML bootstrap and first host
+  hosts: application
+  pre_tasks:
+    - name: Create empty yaml bootstrap target
+      ansible.builtin.copy:
+        dest: /opt/yaml_bootstrap.yml
+        mode: "0644"
+        content: ""
+        force: false
+      become: true
+      delegate_to: "{{ prometheus_target_host }}"
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_strategy: yaml
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - path: /opt/yaml_bootstrap.yml
+          host: "{{ inventory_hostname }}:9100"
+          labels:
+            job: node
+
+################################################################################
+################################################################################
+- name: YAML subsequent hosts and parallel writes
+  hosts: application_group
+  pre_tasks:
+    - name: Create yaml parallel target
+      ansible.builtin.copy:
+        dest: /opt/yaml_parallel.yml
+        mode: "0644"
+        content: |
+          - labels:
+              job: node
+            targets:
+              - existing:9100
+        force: false
+      delegate_to: "{{ prometheus_target_host }}"
+      run_once: true
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_strategy: yaml
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - path: /opt/yaml_parallel.yml
+          host: "{{ inventory_hostname }}:9100"
+          labels:
+            job: node
+
+################################################################################
+################################################################################
+- name: YAML user edited file exact label matching
+  hosts: application2
+  pre_tasks:
+    - name: Create user edited yaml target
+      ansible.builtin.copy:
+        dest: /opt/yaml_user_edited.yml
+        mode: "0644"
+        content: |
+          # user comment that will be lost after parse/write
+          - labels:
+              severity: warning
+              job: external
+            targets:
+              - existing_host1:9100
+          - labels:
+              severity: critical
+            targets:
+              - application2:9200
+          - targets:
+              - unlabeled:9100
+        force: false
+      delegate_to: "{{ prometheus_target_host }}"
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_strategy: yaml
+    prometheus_target_exporter_defaults:
+      exact_match:
+        path: /opt/yaml_user_edited.yml
+        host: "{{ inventory_hostname }}:9100"
+        labels:
+          severity: warning
+          job: external
+      move_target:
+        path: /opt/yaml_user_edited.yml
+        host: "{{ inventory_hostname }}:9200"
+        labels:
+          severity: critical
+          team: blue
+      no_labels:
+        path: /opt/yaml_user_edited.yml
+        host: standalone:9300
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - id: exact_match
+        - id: move_target
+        - id: no_labels
+
+################################################################################
+################################################################################
+- name: YAML remove last host by moving target
+  hosts: application
+  pre_tasks:
+    - name: Create yaml remove last host target
+      ansible.builtin.copy:
+        dest: /opt/yaml_move_remove_last.yml
+        mode: "0644"
+        content: |
+          - labels:
+              job: old
+            targets:
+              - application:9400
+        force: false
+      become: true
+      delegate_to: "{{ prometheus_target_host }}"
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_strategy: yaml
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - path: /opt/yaml_move_remove_last.yml
+          host: "{{ inventory_hostname }}:9400"
+          labels:
+            job: new
+
+################################################################################
+################################################################################
+- name: YAML branch coverage matrix
+  hosts: application3
+  pre_tasks:
+    - name: Create yaml branch coverage target
+      ansible.builtin.copy:
+        dest: /opt/yaml_branch_matrix.yml
+        mode: "0644"
+        content: |
+          - labels:
+              job: append
+              env: prod
+            targets:
+              - existing_append:9500
+          - labels:
+              job: wrong
+              env: prod
+            targets:
+              - keep_same_length:9500
+          - labels:
+              job: short
+            targets:
+              - keep_length_mismatch:9500
+          - labels:
+              job: present
+              env: prod
+            targets:
+              - application3:9501
+          - labels:
+              job: move_source
+            targets:
+              - application3:9502
+          - targets:
+              - orphan_unlabeled:9503
+          - targets:
+              - shared_unlabeled:9504
+          - labels:
+              job: foreign
+            targets:
+              - foreign:9505
+        force: false
+      delegate_to: "{{ prometheus_target_host }}"
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_strategy: yaml
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - path: /opt/yaml_branch_matrix.yml
+          host: application3:9506
+          labels:
+            job: append
+            env: prod
+        - path: /opt/yaml_branch_matrix.yml
+          host: application3:9501
+          labels:
+            job: present
+            env: prod
+        - path: /opt/yaml_branch_matrix.yml
+          host: application3:9502
+          labels:
+            job: move_target
+        - path: /opt/yaml_branch_matrix.yml
+          host: orphan_unlabeled:9503
+          labels:
+            job: promoted
+        - path: /opt/yaml_branch_matrix.yml
+          host: standalone_branch:9504
+        - path: /opt/yaml_branch_matrix.yml
+          host: shared_unlabeled:9504
+
+################################################################################
+################################################################################
+- name: YAML missing file creation branches
+  hosts: application4
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_strategy: yaml
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - path: /opt/yaml_missing_labeled.yml
+          host: "{{ inventory_hostname }}:9600"
+          labels:
+            team: infra
+        - path: /opt/yaml_missing_unlabeled.yml
+          host: "{{ inventory_hostname }}:9601"
+
+################################################################################
+################################################################################
+- name: Simple compatibility checks
+  hosts: application
+  pre_tasks:
+    - name: Create compatibility target files
+      ansible.builtin.copy:
+        dest: "{{ item }}"
+        content: ""
+        mode: "0644"
+        force: false
+      become: true
+      delegate_to: "{{ prometheus_target_host }}"
+      loop:
+        - /opt/simple_target1.yml
+        - /opt/simple_target2.yml
+        - /opt/simple_target3.yml
+        - /opt/simple_target4.yml
+        - /opt/prefix_target1.yml
+        - /opt/prefix_target2.yml
+
+    - name: Create prefix directory
+      ansible.builtin.file:
+        path: /opt/prefix
+        state: directory
+        mode: "0644"
+      become: true
+      delegate_to: "{{ prometheus_target_host }}"
+
+    - name: Create prefix target
+      ansible.builtin.copy:
+        dest: /opt/prefix/prefix_target3.yml
+        content: ""
+        mode: "0644"
+        force: false
+      become: true
+      delegate_to: "{{ prometheus_target_host }}"
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_exporter_target_prefix: /opt/
+    prometheus_target_exporter_defaults:
+      node_exporter:
+        path: simple_target1.yml
+        host: "{{ inventory_hostname }}"
+      blackbox_exporter:
+        path: simple_target2.yml
+        host: "{{ inventory_hostname }}_AA"
+      prefixed_exporter:
+        path: prefix_target1.yml
+        host: "{{ inventory_hostname }}"
+      prefixed_other:
+        path: prefix_target_not_exist.yml
+        host: "{{ inventory_hostname }}"
+        path_prefix: /opt/prefix/
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
         - id: node_exporter
-          path: /opt/lineinfile.yml
+        - { id: blackbox_exporter, host: test1 }
+        - { id: blackbox_exporter, host: test2 }
+        - { host: exporter_without_id, path: simple_target4.yml }
+        - { id: blackbox_exporter, path: simple_target3.yml }
+        - { id: prefixed_exporter }
+        - {
+            id: prefixed_exporter,
+            path: /opt/prefix_target2.yml,
+            path_prefix: "",
+          }
+        - { id: prefixed_other, path: prefix_target3.yml }
+
+################################################################################
+################################################################################
+- name: Hook compatibility checks
+  hosts: application_group
+  pre_tasks:
+    - name: Create hook target
+      ansible.builtin.copy:
+        dest: /opt/hook_target.yml
+        content: ""
+        mode: "0644"
+        force: false
+      become: true
+      delegate_to: "{{ prometheus_target_host }}"
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_handler_command_enabled: true
+    prometheus_target_handler_command:
+      cmd: mkdir -p /opt/hook1
+      creates: /opt/hook1
+    prometheus_target_handler_command_run_once: true
+    prometheus_target_handler_shell_enabled: true
+    prometheus_target_handler_shell:
+      cmd: echo hello >> /opt/hook2
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - path: /opt/hook_target.yml
           host: "{{ inventory_hostname }}"
