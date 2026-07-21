@@ -4,12 +4,6 @@
 - name: Lineinfile bootstrap and subsequent hosts
   hosts: application
   pre_tasks:
-    - name: Create test user
-      ansible.builtin.user:
-        name: prometheus
-      become: true
-      delegate_to: "{{ prometheus_target_host }}"
-
     - name: Create lineinfile bootstrap target
       ansible.builtin.copy:
         dest: /opt/lineinfile_bootstrap.yml
@@ -182,23 +176,6 @@
 ################################################################################
 - name: YAML subsequent hosts and parallel writes
   hosts: application_group
-  pre_tasks:
-    - name: Create yaml parallel target
-      ansible.builtin.copy:
-        dest: "{{ item }}"
-        mode: "0644"
-        content: |
-          - labels:
-              job: node
-            targets:
-              - existing:9100
-        force: true
-      delegate_to: "{{ prometheus_target_host }}"
-      run_once: true
-      loop:
-        - /opt/yaml_parallel.yml
-        - /opt/yaml_parallel_second.yml
-
   vars:
     prometheus_target_host: prometheus
     prometheus_target_strategy: yaml
@@ -495,3 +472,274 @@
       prometheus_target_exporter:
         - path: /opt/hook_target.yml
           host: "{{ inventory_hostname }}"
+
+################################################################################
+################################################################################
+- name: Lineinfile exporter resolution matrix
+  hosts: application
+  pre_tasks:
+    - name: Create lineinfile resolution target files
+      ansible.builtin.copy:
+        dest: "{{ item }}"
+        content: ""
+        mode: "0644"
+        force: false
+      become: true
+      delegate_to: "{{ prometheus_target_host }}"
+      loop:
+        - /opt/lineinfile_defaults.yml
+        - /opt/lineinfile_no_id.yml
+        - /opt/lineinfile_override.yml
+        - /opt/lineinfile_skipped.yml
+
+    - name: Create lineinfile default prefix directory
+      ansible.builtin.file:
+        path: /opt/lineinfile-prefix
+        state: directory
+        mode: "0755"
+      become: true
+      delegate_to: "{{ prometheus_target_host }}"
+
+    - name: Create lineinfile prefixed target
+      ansible.builtin.copy:
+        dest: /opt/lineinfile-prefix/default-prefix.yml
+        content: ""
+        mode: "0644"
+        force: false
+      become: true
+      delegate_to: "{{ prometheus_target_host }}"
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_exporter_target_prefix: /opt/
+    prometheus_target_exporter_defaults:
+      inherited:
+        path: lineinfile_defaults.yml
+        host: inherited-default
+      default_only:
+        path: lineinfile_defaults.yml
+        host: appended-default
+      overridden:
+        path: unused.yml
+        host: unused-host
+      prefixed:
+        path: default-prefix.yml
+        host: prefixed-default
+        path_prefix: /opt/lineinfile-prefix/
+    prometheus_target_default_exporters:
+      - id: default_only
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_strategy_lineinfile_prefix: "- "
+      prometheus_target_exporter:
+        - id: inherited
+        - id: inherited
+        - path: lineinfile_no_id.yml
+          host: no-id
+        - id: overridden
+          path: /opt/lineinfile_override.yml
+          path_prefix: ""
+          host: item-override
+        - id: prefixed
+
+################################################################################
+################################################################################
+- name: Lineinfile skips default exporters
+  hosts: application
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_skip_default_exporters: true
+    prometheus_target_exporter_defaults:
+      skipped:
+        path: /opt/lineinfile_skipped.yml
+        host: must-not-appear
+    prometheus_target_default_exporters:
+      - id: skipped
+
+  roles:
+    - role: kliwniloc.prometheus_target
+
+################################################################################
+################################################################################
+- name: YAML exporter resolution matrix
+  hosts: application
+  pre_tasks:
+    - name: Create YAML resolution target files
+      ansible.builtin.copy:
+        dest: "{{ item.path }}"
+        content: "{{ item.content }}"
+        mode: "0644"
+        force: false
+      become: true
+      delegate_to: "{{ prometheus_target_host }}"
+      loop:
+        - path: /opt/yaml_defaults.yml
+          content: ""
+        - path: /opt/yaml_no_id.yml
+          content: ""
+        - path: /opt/yaml_override.yml
+          content: ""
+        - path: /opt/yaml_null.yml
+          content: "~\n"
+        - path: /opt/yaml_skipped.yml
+          content: ""
+
+    - name: Create YAML default prefix directory
+      ansible.builtin.file:
+        path: /opt/yaml-prefix
+        state: directory
+        mode: "0755"
+      become: true
+      delegate_to: "{{ prometheus_target_host }}"
+
+    - name: Create YAML prefixed target
+      ansible.builtin.copy:
+        dest: /opt/yaml-prefix/default-prefix.yml
+        content: ""
+        mode: "0644"
+        force: false
+      become: true
+      delegate_to: "{{ prometheus_target_host }}"
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_strategy: yaml
+    prometheus_target_exporter_target_prefix: /opt/
+    prometheus_target_exporter_defaults:
+      inherited:
+        path: yaml_defaults.yml
+        host: inherited-default:9700
+        labels:
+          job: inherited
+          environment: production
+      default_only:
+        path: yaml_defaults.yml
+        host: appended-default:9701
+        labels:
+          job: default
+      overridden:
+        path: unused.yml
+        host: unused-host
+        labels:
+          job: unused
+      prefixed:
+        path: default-prefix.yml
+        host: prefixed-default:9702
+        path_prefix: /opt/yaml-prefix/
+        labels:
+          job: prefixed
+    prometheus_target_default_exporters:
+      - id: default_only
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - id: inherited
+          host: application:9700
+          labels:
+            environment: staging
+        - id: inherited
+          host: application:9700
+          labels:
+            environment: staging
+        - path: yaml_no_id.yml
+          host: no-id:9700
+          labels:
+            job: no-id
+        - id: overridden
+          path: /opt/yaml_override.yml
+          path_prefix: ""
+          host: item-override:9700
+          labels:
+            job: override
+        - id: prefixed
+        - path: yaml_null.yml
+          host: from-null:9700
+
+################################################################################
+################################################################################
+- name: YAML skips default exporters
+  hosts: application
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_strategy: yaml
+    prometheus_target_skip_default_exporters: true
+    prometheus_target_exporter_defaults:
+      skipped:
+        path: /opt/yaml_skipped.yml
+        host: must-not-appear:9700
+        labels:
+          job: skipped
+    prometheus_target_default_exporters:
+      - id: skipped
+
+  roles:
+    - role: kliwniloc.prometheus_target
+
+################################################################################
+################################################################################
+- name: Handler execution matrix
+  hosts: application_group
+  pre_tasks:
+    - name: Create handler matrix target
+      ansible.builtin.copy:
+        dest: /opt/handler_matrix.yml
+        content: ""
+        mode: "0644"
+        force: false
+      become: true
+      delegate_to: "{{ prometheus_target_host }}"
+      run_once: true
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_handler_command_enabled: true
+    prometheus_target_handler_command_become: false
+    prometheus_target_handler_command_run_once: false
+    prometheus_target_handler_command:
+      cmd: "touch /tmp/command-handler-{{ inventory_hostname }}"
+      creates: "/tmp/command-handler-{{ inventory_hostname }}"
+    prometheus_target_handler_shell_enabled: true
+    prometheus_target_handler_shell_become: false
+    prometheus_target_handler_shell_run_once: true
+    prometheus_target_handler_shell:
+      cmd: touch /tmp/shell-handler-run-once
+      creates: /tmp/shell-handler-run-once
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_strategy_lineinfile_prefix: "- "
+      prometheus_target_exporter:
+        - path: /opt/handler_matrix.yml
+          host: "{{ inventory_hostname }}"
+
+################################################################################
+################################################################################
+- name: Disabled handlers do not execute
+  hosts: application
+  pre_tasks:
+    - name: Create disabled handler target
+      ansible.builtin.copy:
+        dest: /opt/handler_disabled.yml
+        content: ""
+        mode: "0644"
+        force: false
+      become: true
+      delegate_to: "{{ prometheus_target_host }}"
+
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_handler_command_enabled: false
+    prometheus_target_handler_command:
+      cmd: touch /tmp/disabled-command-handler
+    prometheus_target_handler_shell_enabled: false
+    prometheus_target_handler_shell:
+      cmd: touch /tmp/disabled-shell-handler
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_strategy_lineinfile_prefix: "- "
+      prometheus_target_exporter:
+        - path: /opt/handler_disabled.yml
+          host: application

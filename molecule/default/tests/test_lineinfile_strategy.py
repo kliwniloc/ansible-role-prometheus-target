@@ -92,3 +92,41 @@ def test_lineinfile_hooks_still_run(host):
 
     assert host.file("/opt/hook1").exists
     assert host.file("/opt/hook2").content_string == "hello\nhello\nhello\nhello\n"
+
+
+def test_lineinfile_exporter_defaults_overrides_and_duplicates(host):
+    assert read_yaml_file(host, "/opt/lineinfile_defaults.yml") == [
+        "inherited-default",
+        "appended-default",
+    ]
+    assert read_yaml_file(host, "/opt/lineinfile_no_id.yml") == ["no-id"]
+    assert read_yaml_file(host, "/opt/lineinfile_override.yml") == ["item-override"]
+    assert read_yaml_file(host, "/opt/lineinfile-prefix/default-prefix.yml") == [
+        "prefixed-default"
+    ]
+
+
+def test_lineinfile_skip_default_exporters(host):
+    assert read_file(host, "/opt/lineinfile_skipped.yml").content_string == ""
+
+
+def test_handler_run_once_and_per_host_modes(host):
+    for application in ["application", "application2", "application3", "application4"]:
+        assert host.file(f"/tmp/command-handler-{application}").exists
+
+    assert host.file("/tmp/shell-handler-run-once").exists
+
+
+def test_disabled_handlers_do_not_run(host):
+    assert not host.file("/tmp/disabled-command-handler").exists
+    assert not host.file("/tmp/disabled-shell-handler").exists
+
+
+def test_future_lineinfile_removal_fixture_is_untouched(host):
+    assert read_yaml_file(host, "/opt/lineinfile_state_removal.yml") == [
+        {
+            "labels": {"job": "shared"},
+            "targets": ["keep:9100", "remove:9100"],
+        },
+        {"labels": {"job": "remove_last"}, "targets": ["remove:9200"]},
+    ]

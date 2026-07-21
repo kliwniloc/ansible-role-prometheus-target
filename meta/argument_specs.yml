@@ -26,6 +26,16 @@ argument_specs:
           - lineinfile
           - yaml
 
+      prometheus_target_strategy_lineinfile_prefix:
+        type: str
+        required: false
+        default: "    - "
+
+      prometheus_target_strategy_lineinfile_suffix:
+        type: str
+        required: false
+        default: ""
+
       prometheus_target_handler_command_enabled:
         type: bool
         required: false
@@ -35,6 +45,14 @@ argument_specs:
         type: bool
         required: false
         default: true
+
+      prometheus_target_handler_command_become_method:
+        type: str
+        required: false
+
+      prometheus_target_handler_command_become_user:
+        type: str
+        required: false
 
       prometheus_target_handler_command_run_once:
         type: bool
@@ -56,6 +74,14 @@ argument_specs:
         type: bool
         required: false
         default: true
+
+      prometheus_target_handler_shell_become_method:
+        type: str
+        required: false
+
+      prometheus_target_handler_shell_become_user:
+        type: str
+        required: false
 
       prometheus_target_handler_shell_run_once:
         type: bool
@@ -100,7 +126,24 @@ argument_specs:
         type: list
         required: false
         default: []
-        elements: str
+        elements: dict
+        options:
+          id:
+            type: str
+            required: false
+          path:
+            type: str
+            required: false
+          path_prefix:
+            type: str
+            required: false
+          host:
+            type: str
+            required: false
+          labels:
+            type: dict
+            required: false
+            description: Labels to match the target group in the YAML file (yaml strategy only)
 
       prometheus_target_skip_default_exporters:
         type: bool

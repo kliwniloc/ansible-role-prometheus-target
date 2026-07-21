@@ -1,0 +1,55 @@
+---
+- name: Prepare Prometheus target fixtures
+  hosts: prometheus
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Create Prometheus test user
+      ansible.builtin.user:
+        name: prometheus
+
+    - name: Reset fixtures that exercise parallel writes
+      ansible.builtin.copy:
+        dest: "{{ item }}"
+        mode: "0644"
+        content: |
+          - labels:
+              job: node
+            targets:
+              - existing:9100
+      loop:
+        - /opt/yaml_parallel.yml
+        - /opt/yaml_parallel_second.yml
+
+    # These are intentionally not consumed yet. They provide stable starting
+    # states for the planned exporter state/removal coverage in both strategies.
+    - name: Prepare future YAML removal fixture
+      ansible.builtin.copy:
+        dest: /opt/yaml_state_removal.yml
+        mode: "0644"
+        content: |
+          - labels:
+              job: shared
+            targets:
+              - keep:9100
+              - remove:9100
+          - labels:
+              job: remove_last
+            targets:
+              - remove:9200
+
+    - name: Prepare future lineinfile removal fixture
+      ansible.builtin.copy:
+        dest: /opt/lineinfile_state_removal.yml
+        mode: "0644"
+        content: |
+          - labels:
+              job: shared
+            targets:
+              - keep:9100
+              - remove:9100
+          - labels:
+              job: remove_last
+            targets:
+              - remove:9200

@@ -92,6 +92,12 @@ def test_yaml_output_remains_parseable_after_all_operations(host):
         "/opt/yaml_branch_matrix.yml",
         "/opt/yaml_missing_labeled.yml",
         "/opt/yaml_missing_unlabeled.yml",
+        "/opt/yaml_defaults.yml",
+        "/opt/yaml_no_id.yml",
+        "/opt/yaml_override.yml",
+        "/opt/yaml_null.yml",
+        "/opt/yaml-prefix/default-prefix.yml",
+        "/opt/yaml_state_removal.yml",
     ]:
         assert read_yaml_file(host, path) is not None
 
@@ -153,4 +159,49 @@ def test_yaml_branch_matrix_creates_missing_file_groups_for_labeled_and_unlabele
 
     assert read_yaml_file(host, "/opt/yaml_missing_unlabeled.yml") == [
         {"targets": ["application4:9601"]}
+    ]
+
+
+def test_yaml_exporter_defaults_merge_labels_and_deduplicate(host):
+    groups = read_yaml_file(host, "/opt/yaml_defaults.yml")
+
+    assert get_group_by_labels(
+        groups, {"job": "inherited", "environment": "staging"}
+    )["targets"] == ["application:9700"]
+    assert get_group_by_labels(groups, {"job": "default"})["targets"] == [
+        "appended-default:9701"
+    ]
+
+
+def test_yaml_exporter_without_id_and_item_overrides(host):
+    assert read_yaml_file(host, "/opt/yaml_no_id.yml") == [
+        {"labels": {"job": "no-id"}, "targets": ["no-id:9700"]}
+    ]
+    assert read_yaml_file(host, "/opt/yaml_override.yml") == [
+        {"labels": {"job": "override"}, "targets": ["item-override:9700"]}
+    ]
+    assert read_yaml_file(host, "/opt/yaml-prefix/default-prefix.yml") == [
+        {"labels": {"job": "prefixed"}, "targets": ["prefixed-default:9702"]}
+    ]
+
+
+def test_yaml_null_document_is_initialized(host):
+    assert read_yaml_file(host, "/opt/yaml_null.yml") == [
+        {"targets": ["from-null:9700"]}
+    ]
+
+
+def test_yaml_skip_default_exporters(host):
+    target = host.file("/opt/yaml_skipped.yml")
+    assert target.exists
+    assert target.content_string == ""
+
+
+def test_future_yaml_removal_fixture_is_untouched(host):
+    assert read_yaml_file(host, "/opt/yaml_state_removal.yml") == [
+        {
+            "labels": {"job": "shared"},
+            "targets": ["keep:9100", "remove:9100"],
+        },
+        {"labels": {"job": "remove_last"}, "targets": ["remove:9200"]},
     ]
