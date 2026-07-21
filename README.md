@@ -1,10 +1,8 @@
-Ansible Role: Prometheus Target
-===============================
+# Ansible Role: Prometheus Target
 
 An Ansible role for deploying Prometheus targets right from your playbooks.
 
-Installation
-------------
+## Installation
 
 via galaxy:
 
@@ -29,8 +27,7 @@ ansible-galaxy install git+https://github.com/kliwniloc/ansible-role-prometheus-
   name: kliwniloc.prometheus_target
 ```
 
-Role Variables
---------------
+## Role Variables
 
 For more details see [`defaults/main.yml`](defaults/main.yml)
 
@@ -81,7 +78,7 @@ As you usually have most target files in one directory you can specify a target
 prefix for your target files:
 
 ```yaml
-prometheus_target_exporter_target_prefix: ''
+prometheus_target_exporter_target_prefix: ""
 ```
 
 This way you only need to pass `target.yml` instead of `/path/to/target.yml` as
@@ -93,21 +90,21 @@ using the `path_prefix` variable:
 prometheus_target_exporter_defaults:
   blackbox_exporter:
     path: /opt/targets/blackbox.yml
-    host: 'https://{{ hostvars[inventory_hostname].ansible_host }}'
-    path_prefix: '' # Disables configured prefix
+    host: "https://{{ hostvars[inventory_hostname].ansible_host }}"
+    path_prefix: "" # Disables configured prefix
 ```
 
 This role offers a few strategies that you can use to deploy your targets.
 The strategy decides how exactly targets are added to the targets file and more
 importantly how to handle existing configuration.
 
-* `lineinfile` is the default strategy and simply *appends* a line to the target
+- `lineinfile` is the default strategy and simply _appends_ a line to the target
   file if it isn't already there. **Note:** Configured `labels` are ignored by
   this strategy.
-* `yaml` *parses* the yaml target file and adds the host to it. This might mess
+- `yaml` _parses_ the yaml target file and adds the host to it. This might mess
   with the readability of your yaml file, and you should avoid it if you edit
   the yaml file manually as well.
-* `json` *parses* the json target file and adds the host to it.
+- `json` _parses_ the json target file and adds the host to it.
 
 ```yaml
 prometheus_target_strategy: lineinfile
@@ -124,8 +121,8 @@ file. The defaults are configured to add a list with 2 (2 space) indentation
 levels.
 
 ```yaml
-prometheus_target_strategy_lineinfile_prefix: '    - '
-prometheus_target_strategy_lineinfile_suffix: ''
+prometheus_target_strategy_lineinfile_prefix: "    - "
+prometheus_target_strategy_lineinfile_suffix: ""
 ```
 
 So the target file should look something like this:
@@ -149,13 +146,14 @@ target file is fully managed by Ansible.
 
 The `yaml` strategy:
 
-* Reads and parses the existing YAML target file
-* Finds the target group where labels **exactly match** the specified labels
-* Adds the host to that group's targets list (if not already present)
-* If no matching group exists, creates a new target group with the specified labels
-* If a host exists in a group with different labels, it is moved to the matching group
-* Creates the target file if it doesn't exist
-* Hosts without labels are matched to target groups without labels
+- Reads and parses the existing YAML target file
+- Finds the target group where labels **exactly match** the specified labels
+- Adds the host to that group's targets list (if not already present)
+- If no matching group exists, creates a new target group with the specified labels
+- If a host exists in a group with different labels, it is moved to the matching
+  group
+- Creates the target file if it doesn't exist
+- Hosts without labels are matched to target groups without labels
 
 Labels can be specified in `prometheus_target_exporter_defaults` and/or
 `prometheus_target_exporter`. Labels from both are **merged**, with the
@@ -190,7 +188,7 @@ Example playbook using the `yaml` strategy:
     prometheus_target_exporter_defaults:
       node_exporter:
         path: /opt/prometheus/targets/node.yml
-        host: '{{ inventory_hostname }}:9100'
+        host: "{{ inventory_hostname }}:9100"
         labels:
           severity: warning
           job: external
@@ -202,9 +200,10 @@ Example playbook using the `yaml` strategy:
         - id: node_exporter
         # Override severity label for this specific exporter
         - id: node_exporter
-          host: '{{ inventory_hostname }}:9115'
+          host: "{{ inventory_hostname }}:9115"
           labels:
-            severity: critical  # Merged with defaults: {severity: critical, job: external, alert_group: node_exporters}
+            severity: critical # Merged with defaults:
+            # {severity: critical, job: external, alert_group: node_exporters}
 ```
 
 After running the playbook on `myhost`, the target file `/opt/prometheus/targets/node.yml`
@@ -275,8 +274,7 @@ prometheus_target_handler_shell_run_once: false
 prometheus_target_handler_shell: {}
 ```
 
-Example Playbooks
------------------
+## Example Playbooks
 
 Simple example
 
@@ -289,7 +287,7 @@ Simple example
     prometheus_target_exporter_defaults:
       node_exporter:
         path: /opt/prometheus/targets/node.yml
-        host: '{{ inventory_hostname }}:9100'
+        host: "{{ inventory_hostname }}:9100"
 
   roles:
     - role: prometheus.node_exporter # deploy node_exporter service
@@ -310,17 +308,17 @@ Using Target prefix
     prometheus_target_exporter_defaults:
       node_exporter:
         path: node.yml
-        host: '{{ inventory_hostname }}:9100'
+        host: "{{ inventory_hostname }}:9100"
       blackbox_exporter: # Another exporter with different prefix
         path: target.yml
-        host: '{{ inventory_hostname }}'
+        host: "{{ inventory_hostname }}"
         path_prefix: /opt/prefix/
 
   roles:
     - role: kliwniloc.prometheus_target
       prometheus_target_exporter:
         - id: node_exporter # -> /opt/prometheus/targets/node.yml
-        - { id: node_exporter, path: /target.yml, path_prefix: '' } # -> /target.yml
+        - { id: node_exporter, path: /target.yml, path_prefix: "" } # -> /target.yml
         - { id: blackbox_exporter, path: blackbox.yml } # -> /opt/prefix/blackbox.yml
 ```
 
@@ -335,7 +333,7 @@ Using Handlers
     prometheus_target_exporter_defaults:
       node_exporter:
         path: /opt/prometheus/targets/node.yml
-        host: '{{ inventory_hostname }}:9100'
+        host: "{{ inventory_hostname }}:9100"
     prometheus_target_handler_command_enabled: true
     prometheus_target_handler_command_cmd: docker kill -s SIGHUP prometheus
 
@@ -356,10 +354,10 @@ Multiple exporters
     prometheus_target_exporter_defaults:
       node_exporter:
         path: /opt/prometheus/targets/node.yml
-        host: '{{ inventory_hostname }}:9100'
+        host: "{{ inventory_hostname }}:9100"
       blackbox_exporter:
         path: /opt/prometheus/targets/blackbox.yml
-        host: 'https://{{ hostvars[inventory_hostname].ansible_host }}'
+        host: "https://{{ hostvars[inventory_hostname].ansible_host }}"
 
   roles:
     - role: prometheus.node_exporter # deploy node_exporter service
@@ -428,8 +426,7 @@ prometheus_target_exporter_defaults:
 +    - agent-m-2:9100
 ```
 
-Troubleshooting
----------------
+## Troubleshooting
 
 ### Running into locks using handlers
 
@@ -441,17 +438,43 @@ on the Prometheus host like this:
 ```yaml
 prometheus_target_handler_shell_enabled: true
 prometheus_target_handler_shell:
-    chdir: /opt/monitoring
-    cmd: |
-        git add prometheus/targets
-        git commit -m "[ANSIBLE] Add target"
-        git push
+  chdir: /opt/monitoring
+  cmd: |
+    git add prometheus/targets
+    git commit -m "[ANSIBLE] Add target"
+    git push
 ```
 
 When deploying targets on multiple hosts you might get an error like this:
 
 ```txt
-fatal: [application -> prometheus]: FAILED! => {"changed": true, "cmd": "git add prometheus/targets\ngit commit -m \"[ANSIBLE] Add target\"\ngit push\n", "delta": "0:00:00.159961", "end": "2023-10-04 17:14:22.711445", "msg": "non-zero return code", "rc": 1, "start": "2023-10-04 17:14:22.551484", "stderr": "remote: error: cannot lock ref 'refs/heads/master': is at 8b37e6aead861cf15a8726b3cfb48ae6dd9d98e6 but expected b372bb8bac22770f241c41efdc9e7a3581060053        \nTo ssh://git_repository\n ! [remote rejected] master -> master (failed to update ref)\nerror: failed to push some refs to 'ssh://git_repository'", "stderr_lines": ["remote: error: cannot lock ref 'refs/heads/master': is at 8b37e6aead861cf15a8726b3cfb48ae6dd9d98e6 but expected b372bb8bac22770f241c41efdc9e7a3581060053        ", "To ssh://git_repository", " ! [remote rejected] master -> master (failed to update ref)", "error: failed to push some refs to 'ssh://git_repository'"], "stdout": "[master 8b37e6a] [ANSIBLE] Add target\n 1 file changed, 3 insertions", "stdout_lines": ["[master 8b37e6a] [ANSIBLE] Add target", " 1 file changed, 3 insertions"]}
+fatal: [application -> prometheus]: FAILED! => {"changed": true,
+  "cmd": "git add prometheus/targets\\",
+  "ngit commit -m \"[ANSIBLE] Add target\"\ngit push\n",
+  "delta": "0:00:00.159961",
+  "end": "2023-10-04 17:14:22.711445",
+  "msg": "non-zero return code",
+  "rc": 1, "start": "2023-10-04 17:14:22.551484",
+  "stderr": "remote: error: cannot lock ref 'refs/heads/master':",
+  "is at 8b37e6aead861cf15a8726b3cfb48ae6dd9d98e6 but expected",
+  "b372bb8bac22770f241c41efdc9e7a3581060053        ",
+  "\nTo ssh://git_repository",
+  "\n ! [remote rejected] master -> master (failed to update ref)",
+  "\nerror: failed to push some refs to 'ssh://git_repository'",
+  "stderr_lines": [
+    "remote: error: cannot lock ref 'refs/heads/master':",
+    "is at 8b37e6aead861cf15a8726b3cfb48ae6dd9d98e6 but expected",
+    "b372bb8bac22770f241c41efdc9e7a3581060053        ",
+    "To ssh://git_repository",
+    " ! [remote rejected] master -> master (failed to update ref)",
+    "error: failed to push some refs to 'ssh://git_repository'"
+  ],
+  "stdout": "[master 8b37e6a] [ANSIBLE] Add target",
+  "\n 1 file changed, 3 insertions",
+  "stdout_lines": [
+    "[master 8b37e6a] [ANSIBLE] Add target",
+    " 1 file changed, 3 insertions"
+  ]}
 ```
 
 To fix this issue you can use the `run_once` options on the handler like
@@ -461,11 +484,11 @@ this:
 prometheus_target_handler_shell_enabled: true
 prometheus_target_handler_shell_run_once: true
 prometheus_target_handler_shell:
-    chdir: /opt/monitoring
-    cmd: |
-        git add prometheus/targets
-        git commit -m "[ANSIBLE] Add target"
-        git push
+  chdir: /opt/monitoring
+  cmd: |
+    git add prometheus/targets
+    git commit -m "[ANSIBLE] Add target"
+    git push
 ```
 
 ### Running into the OpenSSH Max Open Connections limit
@@ -477,8 +500,30 @@ an SSH connection to the Prometheus server for each host, and you can get
 an error like this:
 
 ```txt
-failed: [application -> prometheus] (item={'id': 'agent'}) => {"ansible_loop_var": "item", "item": {"id": "agent"}, "msg": "Data could not be sent to remote host \"prometheus\". Make sure this host can be reached over ssh: mux_client_request_session: session request failed: Session open refused by peer\r\nkex_exchange_identification: read: Connection reset by peer\r\nConnection reset by 0.0.0.0 port 22\r\n", "unreachable": true}
-fatal: [application -> {{ prometheus_target_host }}]: UNREACHABLE! => {"changed": false, "msg": "All items completed", "results": [{"ansible_loop_var": "item", "item": {"id": "agent"}, "msg": "Data could not be sent to remote host \"prometheus\". Make sure this host can be reached over ssh: mux_client_request_session: session request failed: Session open refused by peer\r\nkex_exchange_identification: read: Connection reset by peer\r\nConnection reset by 0.0.0.0 port 22\r\n", "unreachable": true}]}
+failed: [application -> prometheus] (item={'id': 'agent'}) =>
+  {"ansible_loop_var": "item",
+  "item": {"id": "agent"},
+  "msg": "Data could not be sent to remote host",
+  "\"prometheus\". Make sure this host can be reached over ssh:",
+  "mux_client_request_session: session request failed:",
+  "Session open refused by peer",
+  "\r\nkex_exchange_identification: read: Connection reset by peer",
+  "\r\nConnection reset by 0.0.0.0 port 22\r\n",
+  "unreachable": true}
+fatal: [application -> {{ prometheus_target_host }}]: UNREACHABLE! =>
+  {"changed": false,
+  "msg": "All items completed",
+  "results": [
+    {"ansible_loop_var": "item",
+    "item": {"id": "agent"},
+    "msg": "Data could not be sent to remote host",
+    "\"prometheus\". Make sure this host can be reached over ssh:",
+    "mux_client_request_session: session request failed:",
+    "Session open refused by peer",
+    "\r\nkex_exchange_identification: read: Connection reset by peer",
+    "\r\nConnection reset by 0.0.0.0 port 22\r\n",
+    "unreachable": true}
+  ]}
 ```
 
 A quick workaround is to just limit the forks of your `ansible-playbook`
@@ -513,12 +558,10 @@ MaxStartups
     number of unauthenticated connections reaches ``full'' (60).
 ```
 
-Dependencies
-------------
+## Dependencies
 
 None.
 
-License
--------
+## License
 
 MIT
