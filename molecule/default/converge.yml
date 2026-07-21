@@ -185,16 +185,19 @@
   pre_tasks:
     - name: Create yaml parallel target
       ansible.builtin.copy:
-        dest: /opt/yaml_parallel.yml
+        dest: "{{ item }}"
         mode: "0644"
         content: |
           - labels:
               job: node
             targets:
               - existing:9100
-        force: false
+        force: true
       delegate_to: "{{ prometheus_target_host }}"
       run_once: true
+      loop:
+        - /opt/yaml_parallel.yml
+        - /opt/yaml_parallel_second.yml
 
   vars:
     prometheus_target_host: prometheus
@@ -207,6 +210,14 @@
           host: "{{ inventory_hostname }}:9100"
           labels:
             job: node
+        - path: /opt/yaml_parallel_second.yml
+          host: "{{ inventory_hostname }}:9200"
+          labels:
+            job: node
+        - path: /opt/yaml_parallel.yml
+          host: "{{ inventory_hostname }}:9300"
+          labels:
+            job: alternate
 
 ################################################################################
 ################################################################################

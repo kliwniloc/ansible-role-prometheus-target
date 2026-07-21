@@ -1,11 +1,16 @@
 ---
-- name: Process all exporters
+- name: Process YAML exporters
+  ansible.builtin.include_tasks: strategy_yaml.yml
+  when: prometheus_target_strategy == "yaml"
+
+- name: Process all lineinfile exporters
   ansible.builtin.include_tasks:
     file: process_exporter.yml
   loop: "{{ prometheus_target_exporter +
          ([] if prometheus_target_skip_default_exporters else prometheus_target_default_exporters) }}"
   loop_control:
     loop_var: item
+  when: prometheus_target_strategy != "yaml"
 
 - name: Run handlers
   ansible.builtin.include_tasks:

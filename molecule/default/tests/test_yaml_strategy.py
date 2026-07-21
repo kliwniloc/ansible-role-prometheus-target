@@ -44,6 +44,22 @@ def test_yaml_parallel_writes_keep_all_hosts_in_same_group(host):
         "application4:9100",
     ]
 
+    assert get_group_by_labels(groups, {"job": "alternate"})["targets"] == [
+        "application:9300",
+        "application2:9300",
+        "application3:9300",
+        "application4:9300",
+    ]
+
+    second_groups = read_yaml_file(host, "/opt/yaml_parallel_second.yml")
+    assert get_group_by_labels(second_groups, {"job": "node"})["targets"] == [
+        "existing:9100",
+        "application:9200",
+        "application2:9200",
+        "application3:9200",
+        "application4:9200",
+    ]
+
 
 def test_yaml_user_edited_file_is_reparsed_and_keeps_expected_semantics(host):
     groups = read_yaml_file(host, "/opt/yaml_user_edited.yml")
@@ -70,6 +86,7 @@ def test_yaml_output_remains_parseable_after_all_operations(host):
     for path in [
         "/opt/yaml_bootstrap.yml",
         "/opt/yaml_parallel.yml",
+        "/opt/yaml_parallel_second.yml",
         "/opt/yaml_user_edited.yml",
         "/opt/yaml_move_remove_last.yml",
         "/opt/yaml_branch_matrix.yml",

@@ -1,71 +1,115 @@
 ---
-- name: Check if target file exists
-  ansible.builtin.stat:
-    path: "{{ _target_path }}"
-  register: _target_file_stat
-  delegate_to: "{{ prometheus_target_host }}"
-
-- name: Read target file
-  ansible.builtin.slurp:
-    src: "{{ _target_path }}"
-  register: _target_file_content
-  delegate_to: "{{ prometheus_target_host }}"
-  when: _target_file_stat.stat.exists
-
-- name: Parse YAML and add host to matching target group
+- name: Prepare YAML exporter updates
   ansible.builtin.set_fact:
-    _updated_targets: >-
-      {%- set targets = (_target_file_content.content | b64decode | from_yaml) if _target_file_stat.stat.exists else [] -%}
-      {%- set targets = targets if targets is not none else [] -%}
-      {%- set ns = namespace(found=false, result=[], match=true) -%}
-      {%- for group in targets -%}
-        {%- set group_labels = group.labels | default({}) -%}
-        {%- set ns.match = true -%}
-        {%- if _target_labels | length != group_labels | length -%}
-          {%- set ns.match = false -%}
-        {%- else -%}
-          {%- for key, value in _target_labels.items() -%}
-            {%- if group_labels.get(key) != value -%}
-              {%- set ns.match = false -%}
+    _prometheus_target_yaml_updates: >-
+      {%- set ns = namespace(updates=[]) -%}
+      {%- set exporters = prometheus_target_exporter +
+          ([] if prometheus_target_skip_default_exporters else prometheus_target_default_exporters) -%}
+      {%- for exporter in exporters -%}
+        {%- set defaults = prometheus_target_exporter_defaults[exporter.id] | default({})
+            if exporter.id is defined else {} -%}
+        {%- set path =
+            (exporter.path_prefix if exporter.path_prefix is defined else
+             (defaults.path_prefix | default(prometheus_target_exporter_target_prefix))) ~
+            ((exporter.path if exporter.path is defined else defaults.path) | mandatory) -%}
+        {%- set host = (exporter.host if exporter.host is defined else defaults.host) | mandatory -%}
+        {%- set labels = (defaults.labels | default({})) | combine(exporter.labels | default({})) -%}
+        {%- set _ = ns.updates.append({'path': path, 'host': host, 'labels': labels}) -%}
+      {%- endfor -%}
+      {{ ns.updates }}
+
+# Every play host prepares its values above. Applying all updates from one host
+# prevents parallel Ansible forks from overwriting each other's YAML changes.
+- name: Aggregate YAML exporter updates
+  ansible.builtin.set_fact:
+    _prometheus_target_yaml_updates_all: >-
+      {%- set ns = namespace(updates=[]) -%}
+      {%- for target_host in ansible_play_batch -%}
+        {%- for update in hostvars[target_host]._prometheus_target_yaml_updates -%}
+          {%- set _ = ns.updates.append(update) -%}
+        {%- endfor -%}
+      {%- endfor -%}
+      {{ ns.updates }}
+  run_once: true
+
+- name: Collect YAML target paths
+  ansible.builtin.set_fact:
+    _prometheus_target_yaml_paths: >-
+      {{ _prometheus_target_yaml_updates_all | map(attribute='path') | unique | list }}
+  run_once: true
+
+- name: Read YAML target files
+  ansible.builtin.slurp:
+    src: "{{ _yaml_path }}"
+  delegate_to: "{{ prometheus_target_host }}"
+  loop: "{{ _prometheus_target_yaml_paths }}"
+  loop_control:
+    loop_var: _yaml_path
+  register: _yaml_target_files
+  failed_when: false
+  run_once: true
+
+# Build each destination completely in memory and write it once. Besides
+# avoiding lost updates, this keeps updates to different files independent.
+- name: Build updated YAML target files
+  ansible.builtin.set_fact:
+    _prometheus_target_yaml_files: >-
+      {%- set output = namespace(files=[]) -%}
+      {%- for file in _yaml_target_files.results -%}
+        {%- set state = namespace(groups=(file.content | b64decode | from_yaml)
+            if file.content is defined else []) -%}
+        {%- set state.groups = state.groups if state.groups is not none else [] -%}
+        {%- for update in _prometheus_target_yaml_updates_all if update.path == file._yaml_path -%}
+          {%- set next = namespace(found=false, groups=[]) -%}
+          {%- for group in state.groups -%}
+            {%- set group_labels = group.labels | default({}) -%}
+            {%- if group_labels == update.labels -%}
+              {%- if update.host not in group.targets -%}
+                {%- set _ = group.targets.append(update.host) -%}
+              {%- endif -%}
+              {%- set next.found = true -%}
+              {%- set _ = next.groups.append(group) -%}
+            {%- else -%}
+              {%- set filtered = group.targets | reject('equalto', update.host) | list -%}
+              {%- if filtered | length > 0 -%}
+                {%- set replacement = {'targets': filtered} -%}
+                {%- if group_labels | length > 0 -%}
+                  {%- set _ = replacement.update({'labels': group_labels}) -%}
+                {%- endif -%}
+                {%- set _ = next.groups.append(replacement) -%}
+              {%- endif -%}
             {%- endif -%}
           {%- endfor -%}
-        {%- endif -%}
-        {%- if ns.match -%}
-          {%- if _target_host not in group.targets -%}
-            {%- set _ = group.targets.append(_target_host) -%}
-          {%- endif -%}
-          {%- set ns.found = true -%}
-          {%- set _ = ns.result.append(group) -%}
-        {%- else -%}
-          {%- set filtered_targets = group.targets | reject("equalto", _target_host) | list -%}
-          {%- if filtered_targets | length > 0 -%}
-            {%- if group_labels | length > 0 -%}
-              {%- set _ = ns.result.append({"labels": group_labels, "targets": filtered_targets}) -%}
-            {%- else -%}
-              {%- set _ = ns.result.append({"targets": filtered_targets}) -%}
+          {%- if not next.found -%}
+            {%- set new_group = {'targets': [update.host]} -%}
+            {%- if update.labels | length > 0 -%}
+              {%- set _ = new_group.update({'labels': update.labels}) -%}
             {%- endif -%}
+            {%- set _ = next.groups.append(new_group) -%}
           {%- endif -%}
-        {%- endif -%}
+          {%- set state.groups = next.groups -%}
+        {%- endfor -%}
+        {%- set _ = output.files.append({'path': file._yaml_path, 'groups': state.groups}) -%}
       {%- endfor -%}
-      {%- if not ns.found -%}
-        {%- if _target_labels | length > 0 -%}
-          {%- set new_group = {"labels": _target_labels, "targets": [_target_host]} -%}
-        {%- else -%}
-          {%- set new_group = {"targets": [_target_host]} -%}
-        {%- endif -%}
-        {%- set _ = ns.result.append(new_group) -%}
-      {%- endif -%}
-      {{ ns.result }}
+      {{ output.files }}
+  run_once: true
 
-- name: Write updated target file
+- name: Write updated YAML target files
   ansible.builtin.copy:
-    content: "{{ _updated_targets | to_nice_yaml(indent=2, width=1337) }}"
-    dest: "{{ _target_path }}"
+    content: "{{ _yaml_file.groups | to_nice_yaml(indent=2, width=1337) }}"
+    dest: "{{ _yaml_file.path }}"
     mode: "0644"
   delegate_to: "{{ prometheus_target_host }}"
   become: true
-  register: _yaml_result
+  loop: "{{ _prometheus_target_yaml_files }}"
+  loop_control:
+    loop_var: _yaml_file
+    label: "{{ _yaml_file.path }}"
+  register: _yaml_results
+  run_once: true
 
-- name: Track changes
+- name: Track aggregated YAML changes on each host
   ansible.builtin.set_fact:
-    changed: "{{ changed | default(false) or _yaml_result.changed }}"
+    changed: >-
+      {{ hostvars[ansible_play_batch | first]._yaml_results.results |
+         selectattr('changed') | list | length > 0 }}
