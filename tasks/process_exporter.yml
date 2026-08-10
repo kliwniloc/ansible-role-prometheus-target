@@ -12,6 +12,13 @@
       {{ (item.host if item.host is defined else _defaults.host) | mandatory }}
     _target_labels: >-
       {{ (_defaults.labels | default({})) | combine(item.labels | default({})) }}
+    _target_state: >-
+      {{ item.state if item.state is defined else (_defaults.state | default('present')) }}
+
+- name: Validate exporter state
+  ansible.builtin.assert:
+    that: _target_state in ["present", "absent"]
+    fail_msg: "Exporter state must be 'present' or 'absent', got '{{ _target_state }}'"
 
 - name: Execute strategy
   ansible.builtin.include_tasks:

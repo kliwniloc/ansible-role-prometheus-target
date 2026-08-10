@@ -129,12 +129,14 @@ prometheus_target_exporter_defaults: {}
   #   labels:  # Labels to match when using yaml strategy
   #     severity: warning
   #     job: external
+  #   state: present  # Set to absent to remove this target
   # blackbox_exporter:
   #   path: /opt/targets/blackbox.yml
   #   host: "https://{{ hostvars[inventory_hostname].ansible_host }}"
   #   path_prefix: ""
   #   labels:
   #     severity: critical
+  #   state: present
 
 # This is where you specify the exporters that should be deployed to prometheus.
 # You should configure this on a per play basis. If you wish to configure
@@ -150,6 +152,7 @@ prometheus_target_exporter: []
   #   labels:
   #     severity: warning
   #     job: external
+  #   state: present  # Set to absent to remove this target
 
 # This is a list of exporters that will be appended to the
 # prometheus_target_exporter variable. duplicate exporters in

@@ -1,13 +1,23 @@
 ---
+- name: Check target file for removal
+  ansible.builtin.stat:
+    path: "{{ _target_path }}"
+  delegate_to: "{{ prometheus_target_host }}"
+  become: true
+  register: _target_file
+  when: _target_state == "absent"
+
 - name: Deploy target via lineinfile
   ansible.builtin.lineinfile:
     path: "{{ _target_path }}"
     line: "{{ prometheus_target_strategy_lineinfile_prefix ~ _target_host ~ prometheus_target_strategy_lineinfile_suffix }}"
-    state: present
+    state: "{{ _target_state }}"
   delegate_to: "{{ prometheus_target_host }}"
   become: true
   register: _lineinfile_result
+  when: _target_state == "present" or _target_file.stat.exists
 
 - name: Track changes
   ansible.builtin.set_fact:
-    changed: "{{ changed | default(false) or _lineinfile_result.changed }}"
+    changed: >-
+      {{ changed | default(false) or (_lineinfile_result.changed | default(false)) }}

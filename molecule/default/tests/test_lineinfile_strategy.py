@@ -122,11 +122,12 @@ def test_disabled_handlers_do_not_run(host):
     assert not host.file("/tmp/disabled-shell-handler").exists
 
 
-def test_future_lineinfile_removal_fixture_is_untouched(host):
+def test_lineinfile_absent_removes_exporters(host):
     assert read_yaml_file(host, "/opt/lineinfile_state_removal.yml") == [
         {
             "labels": {"job": "shared"},
-            "targets": ["keep:9100", "remove:9100"],
+            "targets": ["keep:9100"],
         },
-        {"labels": {"job": "remove_last"}, "targets": ["remove:9200"]},
+        {"labels": {"job": "remove_last"}, "targets": None},
     ]
+    assert not host.file("/opt/lineinfile_state_missing.yml").exists

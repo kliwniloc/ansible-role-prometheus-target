@@ -743,3 +743,51 @@
       prometheus_target_exporter:
         - path: /opt/handler_disabled.yml
           host: application
+
+################################################################################
+################################################################################
+- name: Remove lineinfile exporters
+  hosts: application_remove
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_strategy_lineinfile_prefix: "    - "
+    prometheus_target_exporter_defaults:
+      remove_shared:
+        path: /opt/lineinfile_state_removal.yml
+        host: remove:9100
+        state: absent
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - id: remove_shared
+        - path: /opt/lineinfile_state_removal.yml
+          host: remove:9200
+          state: absent
+        - path: /opt/lineinfile_state_missing.yml
+          host: missing:9100
+          state: absent
+
+################################################################################
+################################################################################
+- name: Remove YAML exporters
+  hosts: application_remove
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_strategy: yaml
+    prometheus_target_exporter_defaults:
+      remove_shared:
+        path: /opt/yaml_state_removal.yml
+        host: remove:9100
+        state: absent
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - id: remove_shared
+        - path: /opt/yaml_state_removal.yml
+          host: remove:9200
+          state: absent
+        - path: /opt/yaml_state_missing.yml
+          host: missing:9100
+          state: absent

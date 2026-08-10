@@ -121,6 +121,13 @@ argument_specs:
             type: dict
             required: false
             description: Labels to match the target group in the YAML file (yaml strategy only)
+          state:
+            type: str
+            required: false
+            default: present
+            choices:
+              - present
+              - absent
 
       prometheus_target_default_exporters:
         type: list
@@ -144,6 +151,13 @@ argument_specs:
             type: dict
             required: false
             description: Labels to match the target group in the YAML file (yaml strategy only)
+          state:
+            type: str
+            required: false
+            default: present
+            choices:
+              - present
+              - absent
 
       prometheus_target_skip_default_exporters:
         type: bool

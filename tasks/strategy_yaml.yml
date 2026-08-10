@@ -14,9 +14,21 @@
             ((exporter.path if exporter.path is defined else defaults.path) | mandatory) -%}
         {%- set host = (exporter.host if exporter.host is defined else defaults.host) | mandatory -%}
         {%- set labels = (defaults.labels | default({})) | combine(exporter.labels | default({})) -%}
-        {%- set _ = ns.updates.append({'path': path, 'host': host, 'labels': labels}) -%}
+        {%- set target_state = exporter.state if exporter.state is defined else
+            (defaults.state | default('present')) -%}
+        {%- set _ = ns.updates.append(
+            {'path': path, 'host': host, 'labels': labels, 'state': target_state}) -%}
       {%- endfor -%}
       {{ ns.updates }}
+
+- name: Validate YAML exporter states
+  ansible.builtin.assert:
+    that: _yaml_update.state in ["present", "absent"]
+    fail_msg: "Exporter state must be 'present' or 'absent', got '{{ _yaml_update.state }}'"
+  loop: "{{ _prometheus_target_yaml_updates }}"
+  loop_control:
+    loop_var: _yaml_update
+    label: "{{ _yaml_update.path }}"
 
 # Every play host prepares its values above. Applying all updates from one host
 # prevents parallel Ansible forks from overwriting each other's YAML changes.
@@ -56,14 +68,27 @@
     _prometheus_target_yaml_files: >-
       {%- set output = namespace(files=[]) -%}
       {%- for file in _yaml_target_files.results -%}
+        {%- set file_updates = _prometheus_target_yaml_updates_all |
+            selectattr('path', 'equalto', file._yaml_path) | list -%}
+        {%- set present_updates = file_updates |
+            selectattr('state', 'equalto', 'present') | list -%}
         {%- set state = namespace(groups=(file.content | b64decode | from_yaml)
             if file.content is defined else []) -%}
         {%- set state.groups = state.groups if state.groups is not none else [] -%}
-        {%- for update in _prometheus_target_yaml_updates_all if update.path == file._yaml_path -%}
+        {%- for update in file_updates -%}
           {%- set next = namespace(found=false, groups=[]) -%}
           {%- for group in state.groups -%}
             {%- set group_labels = group.labels | default({}) -%}
-            {%- if group_labels == update.labels -%}
+            {%- if update.state == 'absent' -%}
+              {%- set filtered = group.targets | reject('equalto', update.host) | list -%}
+              {%- if filtered | length > 0 -%}
+                {%- set replacement = {'targets': filtered} -%}
+                {%- if group_labels | length > 0 -%}
+                  {%- set _ = replacement.update({'labels': group_labels}) -%}
+                {%- endif -%}
+                {%- set _ = next.groups.append(replacement) -%}
+              {%- endif -%}
+            {%- elif group_labels == update.labels -%}
               {%- if update.host not in group.targets -%}
                 {%- set _ = group.targets.append(update.host) -%}
               {%- endif -%}
@@ -80,7 +105,7 @@
               {%- endif -%}
             {%- endif -%}
           {%- endfor -%}
-          {%- if not next.found -%}
+          {%- if update.state == 'present' and not next.found -%}
             {%- set new_group = {'targets': [update.host]} -%}
             {%- if update.labels | length > 0 -%}
               {%- set _ = new_group.update({'labels': update.labels}) -%}
@@ -89,7 +114,9 @@
           {%- endif -%}
           {%- set state.groups = next.groups -%}
         {%- endfor -%}
-        {%- set _ = output.files.append({'path': file._yaml_path, 'groups': state.groups}) -%}
+        {%- if file.content is defined or present_updates | length > 0 -%}
+          {%- set _ = output.files.append({'path': file._yaml_path, 'groups': state.groups}) -%}
+        {%- endif -%}
       {%- endfor -%}
       {{ output.files }}
   run_once: true

@@ -197,11 +197,11 @@ def test_yaml_skip_default_exporters(host):
     assert target.content_string == ""
 
 
-def test_future_yaml_removal_fixture_is_untouched(host):
+def test_yaml_absent_removes_exporters_and_empty_groups(host):
     assert read_yaml_file(host, "/opt/yaml_state_removal.yml") == [
         {
             "labels": {"job": "shared"},
-            "targets": ["keep:9100", "remove:9100"],
+            "targets": ["keep:9100"],
         },
-        {"labels": {"job": "remove_last"}, "targets": ["remove:9200"]},
     ]
+    assert not host.file("/opt/yaml_state_missing.yml").exists

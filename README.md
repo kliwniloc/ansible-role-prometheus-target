@@ -52,6 +52,7 @@ prometheus_target_exporter_defaults: {}
   # node_exporter:
   #   path: /opt/prometheus/targets.yml
   #   host: '{{ inventory_hostname }}:9100'
+  #   state: present
   #   labels:  # Labels to match when using yaml strategy
   #     severity: warning
   #     job: external
@@ -64,6 +65,17 @@ prometheus_target_exporter_defaults: {}
 
 prometheus_target_exporter: []
 ```
+
+Each exporter accepts `state: present` or `state: absent`, defaulting to
+`present`. Set `state: absent` to remove the rendered target from its target
+file. The setting can be defined in `prometheus_target_exporter_defaults` and
+overridden by an entry in `prometheus_target_exporter`.
+
+With the `yaml` strategy, removal searches every group in the configured file,
+regardless of the exporter's labels, and removes groups left without targets.
+With the `lineinfile` strategy, removal deletes the exact line produced by the
+configured prefix, host, and suffix. Removing a target from a missing file is a
+no-op for both strategies.
 
 You can also add exporter that you want to have deployed without needing to
 specify them in the `prometheus_target_exporter` variable by adding them to the
