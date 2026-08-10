@@ -62,7 +62,7 @@
 - name: Lineinfile subsequent hosts and parallel writes
   hosts: application_group
   pre_tasks:
-    - name: Create lineinfile parallel target
+    - name: Create lineinfile parallel target # noqa: run-once[task]
       ansible.builtin.copy:
         dest: /opt/lineinfile_parallel.yml
         owner: prometheus
@@ -435,11 +435,9 @@
         - { host: exporter_without_id, path: simple_target4.yml }
         - { id: blackbox_exporter, path: simple_target3.yml }
         - { id: prefixed_exporter }
-        - {
-            id: prefixed_exporter,
-            path: /opt/prefix_target2.yml,
-            path_prefix: "",
-          }
+        - id: prefixed_exporter
+          path: /opt/prefix_target2.yml
+          path_prefix: ""
         - { id: prefixed_other, path: prefix_target3.yml }
 
 ################################################################################
@@ -682,7 +680,7 @@
 - name: Handler execution matrix
   hosts: application_group
   pre_tasks:
-    - name: Create handler matrix target
+    - name: Create handler matrix target # noqa: run-once[task]
       ansible.builtin.copy:
         dest: /opt/handler_matrix.yml
         content: ""
@@ -698,8 +696,8 @@
     prometheus_target_handler_command_become: false
     prometheus_target_handler_command_run_once: false
     prometheus_target_handler_command:
-      cmd: "touch /tmp/command-handler-{{ inventory_hostname }}"
-      creates: "/tmp/command-handler-{{ inventory_hostname }}"
+      cmd: touch /tmp/command-handler-{{ inventory_hostname }}
+      creates: /tmp/command-handler-{{ inventory_hostname }}
     prometheus_target_handler_shell_enabled: true
     prometheus_target_handler_shell_become: false
     prometheus_target_handler_shell_run_once: true

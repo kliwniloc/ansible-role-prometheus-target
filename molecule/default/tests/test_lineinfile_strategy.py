@@ -20,7 +20,9 @@ def test_lineinfile_bootstrap_adds_first_host_without_breaking_yaml(host):
     assert target.user == "prometheus"
     assert target.group == "prometheus"
     assert target.mode == 0o600
-    assert read_yaml_file(host, "/opt/lineinfile_first_host.yml") == ["application:9100"]
+    assert read_yaml_file(host, "/opt/lineinfile_first_host.yml") == [
+        "application:9100"
+    ]
 
 
 def test_lineinfile_adds_subsequent_host_to_existing_yaml(host):

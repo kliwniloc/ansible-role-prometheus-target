@@ -17,8 +17,8 @@
 
 - name: Validate exporter state
   ansible.builtin.assert:
-    that: _target_state in ["present", "absent"]
-    fail_msg: "Exporter state must be 'present' or 'absent', got '{{ _target_state }}'"
+    that: _target_state in ['present', 'absent']
+    fail_msg: Exporter state must be 'present' or 'absent', got '{{ _target_state }}'
 
 - name: Execute strategy
   ansible.builtin.include_tasks:

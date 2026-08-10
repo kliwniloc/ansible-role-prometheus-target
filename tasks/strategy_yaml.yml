@@ -23,8 +23,8 @@
 
 - name: Validate YAML exporter states
   ansible.builtin.assert:
-    that: _yaml_update.state in ["present", "absent"]
-    fail_msg: "Exporter state must be 'present' or 'absent', got '{{ _yaml_update.state }}'"
+    that: _yaml_update.state in ['present', 'absent']
+    fail_msg: Exporter state must be 'present' or 'absent', got '{{ _yaml_update.state }}'
   loop: "{{ _prometheus_target_yaml_updates }}"
   loop_control:
     loop_var: _yaml_update

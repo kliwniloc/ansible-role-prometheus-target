@@ -72,14 +72,19 @@ def test_yaml_user_edited_file_is_reparsed_and_keeps_expected_semantics(host):
         "targets"
     ] == ["application2:9200"]
 
-    assert get_unlabeled_group(groups)["targets"] == ["unlabeled:9100", "standalone:9300"]
+    assert get_unlabeled_group(groups)["targets"] == [
+        "unlabeled:9100",
+        "standalone:9300",
+    ]
 
 
 def test_yaml_moving_host_removes_last_host_from_old_group(host):
     groups = read_yaml_file(host, "/opt/yaml_move_remove_last.yml")
 
     assert not has_group_with_labels(groups, {"job": "old"})
-    assert get_group_by_labels(groups, {"job": "new"})["targets"] == ["application:9400"]
+    assert get_group_by_labels(groups, {"job": "new"})["targets"] == [
+        "application:9400"
+    ]
 
 
 def test_yaml_output_remains_parseable_after_all_operations(host):
@@ -110,12 +115,14 @@ def test_yaml_branch_matrix_covers_exact_match_and_append(host):
         "application3:9506",
     ]
 
-    assert get_group_by_labels(groups, {"job": "present", "env": "prod"})["targets"] == [
-        "application3:9501"
-    ]
+    assert get_group_by_labels(groups, {"job": "present", "env": "prod"})[
+        "targets"
+    ] == ["application3:9501"]
 
 
-def test_yaml_branch_matrix_keeps_nonmatching_groups_for_both_label_mismatch_paths(host):
+def test_yaml_branch_matrix_keeps_nonmatching_groups_for_both_label_mismatch_paths(
+    host,
+):
     groups = read_yaml_file(host, "/opt/yaml_branch_matrix.yml")
 
     assert get_group_by_labels(groups, {"job": "wrong", "env": "prod"})["targets"] == [
@@ -126,7 +133,9 @@ def test_yaml_branch_matrix_keeps_nonmatching_groups_for_both_label_mismatch_pat
         "keep_length_mismatch:9500"
     ]
 
-    assert get_group_by_labels(groups, {"job": "foreign"})["targets"] == ["foreign:9505"]
+    assert get_group_by_labels(groups, {"job": "foreign"})["targets"] == [
+        "foreign:9505"
+    ]
 
 
 def test_yaml_branch_matrix_moves_hosts_and_drops_emptied_groups(host):
@@ -152,7 +161,9 @@ def test_yaml_branch_matrix_preserves_unlabeled_group_when_targets_remain(host):
     ]
 
 
-def test_yaml_branch_matrix_creates_missing_file_groups_for_labeled_and_unlabeled_targets(host):
+def test_yaml_branch_matrix_creates_missing_file_groups_for_labeled_and_unlabeled_targets(
+    host,
+):
     assert read_yaml_file(host, "/opt/yaml_missing_labeled.yml") == [
         {"labels": {"team": "infra"}, "targets": ["application4:9600"]}
     ]
@@ -165,9 +176,9 @@ def test_yaml_branch_matrix_creates_missing_file_groups_for_labeled_and_unlabele
 def test_yaml_exporter_defaults_merge_labels_and_deduplicate(host):
     groups = read_yaml_file(host, "/opt/yaml_defaults.yml")
 
-    assert get_group_by_labels(
-        groups, {"job": "inherited", "environment": "staging"}
-    )["targets"] == ["application:9700"]
+    assert get_group_by_labels(groups, {"job": "inherited", "environment": "staging"})[
+        "targets"
+    ] == ["application:9700"]
     assert get_group_by_labels(groups, {"job": "default"})["targets"] == [
         "appended-default:9701"
     ]
