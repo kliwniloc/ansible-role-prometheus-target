@@ -1,6 +1,35 @@
 # Ansible Role: Prometheus Target
 
-An Ansible role for deploying Prometheus targets right from your playbooks.
+Manage Prometheus targets from the hosts you deploy. Define exporter conventions
+once in `group_vars`, then register every host automatically in the right target
+file.
+
+## Quickstart
+
+Apply the role to the hosts you want Prometheus to monitor. The role updates the
+target file on `prometheus_target_host`, so that host must be present and
+reachable in your Ansible inventory.
+
+```yaml
+- name: Register node exporters with Prometheus
+  hosts: applications
+
+  # Possibly group vars
+  vars:
+    prometheus_target_host: prometheus
+    prometheus_target_exporter_defaults:
+      node_exporter:
+        path: /etc/prometheus/targets/nodes.yml
+        host: "{{ inventory_hostname }}:9100"
+
+  roles:
+    - role: kliwniloc.prometheus_target
+      prometheus_target_exporter:
+        - id: node_exporter
+```
+
+Define common exporter settings in `prometheus_target_exporter_defaults`; each
+host can then register an exporter with its ID.
 
 ## Installation
 
