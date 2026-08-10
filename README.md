@@ -4,7 +4,7 @@ Manage Prometheus targets from the hosts you deploy. Define exporter conventions
 once in `group_vars`, then register every host automatically in the right target
 file.
 
-## Quickstart
+## Quick Start
 
 Apply the role to the hosts you want Prometheus to monitor. The role updates the
 target file on `prometheus_target_host`, so that host must be present and
@@ -44,7 +44,7 @@ ansible-galaxy install kliwniloc.prometheus_target
 - src: kliwniloc.prometheus_target
 ```
 
-via git:
+Via Git:
 
 ```sh
 ansible-galaxy install git+https://github.com/kliwniloc/ansible-role-prometheus-target.git,master
@@ -414,10 +414,19 @@ Multiple exporters
         - { id: blackbox_exporter, host: node3.example.org }
 ```
 
-Target file matching based on group vars
+### Target File Matching Based on Group Vars
+
+For larger inventories, define shared settings once and keep exporter defaults
+with the inventory groups they describe. Hosts only need to enable the
+appropriate exporter ID in the playbook.
+
+This example writes small and medium agents to separate target files:
 
 ```ini
-# Inventory file
+# inventory.ini
+[prometheus]
+prometheus
+
 [agents_s]
 agent-s-[1:2]
 
@@ -430,25 +439,40 @@ agents_m
 ```
 
 ```yaml
+# group_vars/all/prometheus_target.yml
+prometheus_target_host: prometheus
+prometheus_target_strategy: yaml
+
+# Reload once after any target file changes.
+prometheus_target_handler_command_enabled: true
+prometheus_target_handler_command_run_once: true
+prometheus_target_handler_command:
+  cmd: systemctl reload prometheus
+```
+
+```yaml
 # group_vars/agents_s.yml
 prometheus_target_exporter_defaults:
-    node_exporter:
+  node_exporter:
     path: /opt/prometheus/targets/agent_s.yml
-    host: '{{ inventory_hostname }}:9100'
+    host: "{{ inventory_hostname }}:9100"
+    labels:
+      agent_size: small
+      job: node
 
 # group_vars/agents_m.yml
 prometheus_target_exporter_defaults:
-    node_exporter:
+  node_exporter:
     path: /opt/prometheus/targets/agent_m.yml
-    host: '{{ inventory_hostname }}:9100'
+    host: "{{ inventory_hostname }}:9100"
+    labels:
+      agent_size: medium
+      job: node
 ```
 
 ```yaml
 - name: Deploy monitoring
   hosts: agents
-
-  vars:
-    prometheus_target_host: prometheus
 
   roles:
     - role: prometheus.node_exporter # deploy node_exporter service
@@ -457,15 +481,38 @@ prometheus_target_exporter_defaults:
         - id: node_exporter
 ```
 
+After running the playbook, the `yaml` strategy creates or updates these target
+files on the Prometheus host:
+
 ```diff
 # /opt/prometheus/targets/agent_s.yml
++- labels:
++    agent_size: small
++    job: node
++  targets:
 +    - agent-s-1:9100
 +    - agent-s-2:9100
 
 # /opt/prometheus/targets/agent_m.yml
++- labels:
++    agent_size: medium
++    job: node
++  targets:
 +    - agent-m-1:9100
 +    - agent-m-2:9100
 ```
+
+Do not define different `prometheus_target_exporter_defaults` for the same
+exporter ID in multiple groups that include the same host. Ansible selects one
+value based on variable precedence, which can give unexpected results and add
+hidden complexity. Let one functional group own each exporter definition.
+
+If people edit target files manually, use the `lineinfile` strategy instead. It
+keeps the existing formatting, but cannot group targets by labels. Use separate
+target files for groups that need different labels.
+
+When deploying to many hosts, also see the SSH connection guidance in
+[Running into the OpenSSH Max Open Connections limit](#running-into-the-openssh-max-open-connections-limit).
 
 ## Troubleshooting
 
