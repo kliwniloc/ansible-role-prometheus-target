@@ -33,7 +33,7 @@ host can then register an exporter with its ID.
 
 ## Installation
 
-via galaxy:
+Via Ansible Galaxy:
 
 ```sh
 ansible-galaxy install kliwniloc.prometheus_target
@@ -61,7 +61,7 @@ ansible-galaxy install git+https://github.com/kliwniloc/ansible-role-prometheus-
 For more details see [`defaults/main.yml`](defaults/main.yml)
 
 You need to specify your Prometheus server. The server needs to be present under
-that that name in your inventory.
+that name in your inventory.
 
 ```yaml
 prometheus_target_host: "" # Required
@@ -106,7 +106,7 @@ With the `lineinfile` strategy, removal deletes the exact line produced by the
 configured prefix, host, and suffix. Removing a target from a missing file is a
 no-op for both strategies.
 
-You can also add exporter that you want to have deployed without needing to
+You can also add exporters that you want to have deployed without needing to
 specify them in the `prometheus_target_exporter` variable by adding them to the
 `prometheus_target_default_exporters` variable.
 
@@ -145,7 +145,6 @@ importantly how to handle existing configuration.
 - `yaml` _parses_ the yaml target file and adds the host to it. This might mess
   with the readability of your yaml file, and you should avoid it if you edit
   the yaml file manually as well.
-- `json` _parses_ the json target file and adds the host to it.
 
 ```yaml
 prometheus_target_strategy: lineinfile
@@ -279,7 +278,7 @@ include `alert_group: node_exporters`, but no existing group has all three label
 the second exporter created a new target group.
 
 There are a few handlers that are notified if a new target is added. You will
-want to use those to reload your Prometheus instance after adding modifying
+want to use those to reload your Prometheus instance after adding or modifying
 targets. If you manage your target files in git you may also wish to commit the
 changes via a hook.
 
@@ -376,7 +375,8 @@ Using Handlers
         path: /opt/prometheus/targets/node.yml
         host: "{{ inventory_hostname }}:9100"
     prometheus_target_handler_command_enabled: true
-    prometheus_target_handler_command_cmd: docker kill -s SIGHUP prometheus
+    prometheus_target_handler_command:
+      cmd: docker kill -s SIGHUP prometheus
 
   roles:
     - role: prometheus.node_exporter # deploy node_exporter service
