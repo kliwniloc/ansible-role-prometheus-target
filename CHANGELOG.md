@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.4.0] - 2026-08-11
+
+### Added: exporter state
+
+- Add `state: present` and `state: absent` to manage or remove targets (commit `c267536`).
+
+### Fixed: yaml strategy
+
+- Prevent targets from being lost during parallel writes (commit `0055971`).
+
+### Documentation
+
+- Add quick start and large deployment guidance to `README.md` (commit `f31bda0`).
+
 ## [1.3.0] - 2026-02-09
 
 ### Added: yaml strategy
